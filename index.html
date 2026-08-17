@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0d0d0d">
+<title>Aurum Ledger</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+/* ---------- Design tokens ---------- */
+:root, :root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a0806;
+  --surface: #17130d;
+  --surface-2: #231c11;
+  --ink: #f6f1e4;
+  --ink-2: #cdc5ae;
+  --muted: #948c76;
+  --hairline: #2d2718;
+  --baseline: #423a26;
+  --border: rgba(230,200,110,.16);
+  --accent: #d4af37;
+  --accent-soft: rgba(212,175,55,.14);
+  --accent-text: #e8ca6d;
+  --on-accent: #171104;
+  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --crit: #d03b3b;
+  --good-text: #0ca30c;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --shadow: 0 18px 44px rgba(0,0,0,.55);
+  --overlay: rgba(6,4,1,.72);
+  --page-bg: radial-gradient(1200px 520px at 50% -140px, rgba(212,175,55,.13), transparent 62%),
+             radial-gradient(820px 480px at 100% -60px, rgba(120,86,20,.10), transparent 55%),
+             linear-gradient(180deg, #0c0a07, #070503 70%);
+  --card-bg: linear-gradient(180deg, #1c1710 0%, #131009 100%);
+  --card-border: #322a17;
+  --tile-shine: rgba(232,202,109,.55);
+  --header-bg: linear-gradient(180deg, #181208 0%, rgba(10,8,6,0) 100%);
+  --gold-text-grad: linear-gradient(115deg, #f6e3a1 0%, #d9b544 45%, #a4831f 100%);
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --hairline: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11,11,11,.10);
+  --accent: #c9a227;
+  --accent-soft: rgba(201,162,39,.13);
+  --accent-text: #8a6d16;
+  --on-accent: #141204;
+  --good-text: #006300;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+  --shadow: 0 10px 28px rgba(30,26,10,.10);
+  --overlay: rgba(20,18,8,.45);
+  --page-bg: radial-gradient(1000px 420px at 50% -120px, rgba(201,162,39,.07), transparent 60%), #f9f9f7;
+  --card-bg: #fcfcfb;
+  --card-border: #e1e0d9;
+  --tile-shine: rgba(201,162,39,.35);
+  --header-bg: linear-gradient(180deg, #fcfcfb 0%, rgba(249,249,247,0) 100%);
+  --gold-text-grad: linear-gradient(115deg, #b3901f 0%, #8a6d16 100%);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--page-bg);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+  padding-bottom: 64px;
+}
+.serif { font-family: "Playfair Display", Georgia, "Times New Roman", serif; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+/* ---------- Header ---------- */
+header {
+  border-bottom: 1px solid var(--hairline);
+  background: var(--header-bg);
+}
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0 14px; }
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.brand h1 { font-size: 26px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+.brand h1 em {
+  font-style: italic;
+  background: var(--gold-text-grad);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.brand .tag { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.top-actions { display: flex; align-items: center; gap: 8px; }
+.sync-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--ink-2);
+  border: 1px solid var(--hairline); border-radius: 999px;
+  padding: 5px 12px; background: var(--surface);
+  cursor: pointer; white-space: nowrap;
+}
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.sync-dot.ok { background: var(--good); }
+.sync-dot.busy { background: var(--warn); }
+.sync-dot.err { background: var(--crit); }
+.iconbtn {
+  width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--hairline);
+  background: var(--surface); color: var(--ink-2); font-size: 16px;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color .15s, color .15s;
+}
+.iconbtn:hover { border-color: var(--accent); color: var(--accent-text); }
+
+/* ---------- Month bar ---------- */
+.monthbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 0 18px; }
+.month-nav { display: flex; align-items: center; gap: 6px; }
+.month-label { font-size: 24px; font-weight: 600; min-width: 218px; text-align: center; }
+.navbtn {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--hairline);
+  background: var(--surface); color: var(--ink-2); font-size: 15px; cursor: pointer;
+}
+.navbtn:hover { border-color: var(--accent); color: var(--accent-text); }
+.todaybtn {
+  border: none; background: none; color: var(--muted); font-size: 12px;
+  letter-spacing: .12em; text-transform: uppercase; cursor: pointer; padding: 6px 8px;
+}
+.todaybtn:hover { color: var(--accent-text); }
+.budget-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--hairline); border-radius: 999px;
+  background: var(--surface); color: var(--ink-2);
+  font-size: 13px; padding: 7px 14px; cursor: pointer;
+  transition: border-color .15s;
+}
+.budget-pill:hover { border-color: var(--accent); }
+.budget-pill b { color: var(--ink); font-weight: 600; }
+.budget-pill .set { color: var(--accent-text); }
+
+/* ---------- Filter bar — one row of dropdowns ---------- */
+.filterbar {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 14px; padding: 10px 12px; margin-top: 18px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.dd { position: relative; }
+.dd-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--hairline); background: var(--surface-2);
+  color: var(--ink-2); border-radius: 999px;
+  padding: 6px 12px; font-size: 12.5px; font-family: inherit;
+  cursor: pointer; white-space: nowrap;
+  transition: border-color .15s, background .15s;
+}
+.dd-btn:hover { border-color: var(--accent); }
+.dd-btn .k { font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: var(--muted); }
+.dd-btn .v { color: var(--ink); font-weight: 600; }
+.dd-btn .c { color: var(--muted); font-size: 9px; }
+.dd.on .dd-btn { background: var(--accent-soft); border-color: var(--accent); }
+.dd.on .dd-btn .v, .dd.on .dd-btn .k { color: var(--accent-text); }
+.dd.open .dd-btn { border-color: var(--accent); }
+.dd-panel {
+  display: none; position: absolute; z-index: 40;
+  top: calc(100% + 7px); left: 0;
+  min-width: 244px; max-width: min(320px, calc(100vw - 40px));
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 13px; box-shadow: var(--shadow); padding: 9px;
+}
+.dd.open .dd-panel { display: block; }
+.dd-panel.right { left: auto; right: 0; }
+.dd-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 10px; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--muted); padding: 2px 6px 7px;
+}
+.dd-head button {
+  background: none; border: none; color: var(--accent-text); cursor: pointer;
+  font-size: 11px; font-family: inherit; letter-spacing: 0; text-transform: none;
+}
+.dd-list { max-height: 258px; overflow-y: auto; }
+.dd-opt {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  background: none; border: none; color: var(--ink-2);
+  padding: 7px 8px; border-radius: 9px; font-size: 13px;
+  font-family: inherit; cursor: pointer; text-align: left;
+}
+.dd-opt:hover { background: var(--surface-2); }
+.dd-opt .tick { width: 14px; flex: none; color: var(--accent-text); font-size: 12px; }
+.dd-opt.sel { color: var(--ink); font-weight: 600; }
+.dd-opt .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dd-opt .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-opt .amt { color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.dd-opt.dim .nm { opacity: .55; }
+.dd-sep { border-top: 1px solid var(--hairline); margin: 7px 2px; }
+.dd-fields { display: flex; align-items: center; gap: 6px; padding: 2px 6px 4px; }
+.dd-fields input {
+  flex: 1; min-width: 0; background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--hairline); border-radius: 9px;
+  padding: 7px 9px; font-size: 13px; font-family: inherit; outline: none;
+}
+.dd-fields input:focus { border-color: var(--accent); }
+.dd-note { font-size: 11px; color: var(--muted); padding: 3px 8px 2px; }
+.fb-search {
+  flex: 1; min-width: 130px;
+  background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--hairline); border-radius: 999px;
+  padding: 7px 13px; font-size: 12.5px; font-family: inherit; outline: none;
+}
+.fb-search:focus { border-color: var(--accent); }
+.fb-dash { color: var(--muted); font-size: 12px; flex: none; }
+.fb-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.fb-clear {
+  border: 1px solid var(--hairline); background: none; color: var(--crit);
+  border-radius: 999px; padding: 6px 12px; font-size: 12.5px;
+  font-family: inherit; cursor: pointer; white-space: nowrap;
+}
+.fb-clear:hover { border-color: var(--crit); }
+.month-sep {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 16px 0 2px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--accent); border-image: none;
+}
+.month-sep span { font-family: "Playfair Display", Georgia, serif; font-size: 16px; font-weight: 600; }
+.month-sep b { color: var(--accent-text); font-size: 14px; }
+
+/* ---------- KPI tiles ---------- */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 22px; }
+.kpi {
+  background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px;
+  padding: 14px 16px 13px; min-width: 0;
+  position: relative; overflow: hidden;
+  transition: border-color .2s, transform .2s;
+}
+.kpi::before {
+  content: ""; position: absolute; top: 0; left: 14px; right: 14px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--tile-shine), transparent);
+}
+.kpi:hover { border-color: var(--border); transform: translateY(-1px); }
+.kpi .lbl { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.kpi .val { font-size: 24px; font-weight: 600; line-height: 1.15; overflow-wrap: anywhere; }
+.kpi .sub { font-size: 12px; color: var(--ink-2); margin-top: 4px; min-height: 18px; }
+.kpi .delta-down { color: var(--good-text); font-weight: 600; }
+.kpi .delta-up { color: var(--crit); font-weight: 600; }
+.meter { height: 6px; border-radius: 3px; background: var(--surface-2); margin-top: 9px; overflow: hidden; }
+.meter i { display: block; height: 100%; border-radius: 3px; background: var(--good); transition: width .4s ease; }
+
+/* ---------- Cards / sections ---------- */
+.card {
+  background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+  padding: 18px 20px; margin-top: 18px;
+}
+.card-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.card-title h2 { font-size: 19px; font-weight: 600; }
+.card-title .hint { font-size: 12px; color: var(--muted); }
+
+/* ---------- Entry form ---------- */
+.form-grid { display: grid; grid-template-columns: 1.1fr 1.4fr 1.4fr 1.1fr; gap: 10px; }
+.field label { display: block; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.field input, .field select, .field textarea {
+  width: 100%; background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--hairline); border-radius: 10px;
+  padding: 10px 12px; font-size: 15px; font-family: inherit; outline: none;
+  transition: border-color .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.field textarea { resize: vertical; min-height: 44px; }
+.form-foot { display: flex; gap: 10px; align-items: flex-end; margin-top: 10px; flex-wrap: wrap; }
+.form-foot .field { flex: 1; min-width: 220px; }
+.btn {
+  border: none; border-radius: 10px; padding: 11px 22px;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  letter-spacing: .02em; white-space: nowrap;
+}
+.btn-gold {
+  background: linear-gradient(135deg, #f0d98a 0%, var(--accent) 50%, #9d7c17 100%);
+  color: var(--on-accent);
+  box-shadow: 0 6px 18px rgba(201,162,39,.30), inset 0 1px 0 rgba(255,246,205,.55);
+}
+.btn-gold:hover { filter: brightness(1.07); }
+.btn-ghost { background: var(--surface); color: var(--ink-2); border: 1px solid var(--hairline); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent-text); }
+.btn-danger { background: none; color: var(--crit); border: 1px solid var(--hairline); }
+.btn-danger:hover { border-color: var(--crit); }
+.btn[disabled] { opacity: .5; cursor: default; }
+
+/* ---------- Charts ---------- */
+.charts { display: grid; grid-template-columns: 1.7fr 1fr; gap: 18px; margin-top: 18px; }
+.chart-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 18px 20px; min-width: 0; transition: border-color .2s; }
+.chart-card:hover { border-color: var(--border); }
+.chart-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.chart-card .sub { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+.chart-box { position: relative; height: 260px; }
+.chart-empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 13px; font-style: italic;
+}
+
+/* ---------- Entries list ---------- */
+.day-group { margin-bottom: 4px; }
+.day-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 10px 4px 6px; border-bottom: 1px solid var(--hairline);
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+.day-head b { color: var(--ink-2); letter-spacing: 0; font-size: 13px; text-transform: none; }
+.entry-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 4px; border-bottom: 1px solid var(--hairline);
+}
+.entry-row:last-child { border-bottom: none; }
+.swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.entry-main { flex: 1; min-width: 0; }
+.entry-cat { font-weight: 600; font-size: 14px; }
+.entry-note { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.mode-tag {
+  font-size: 11px; color: var(--ink-2); border: 1px solid var(--hairline);
+  border-radius: 999px; padding: 2px 9px; flex: none; background: var(--surface-2);
+}
+.entry-amt { font-weight: 600; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rowbtn {
+  width: 28px; height: 28px; border-radius: 8px; border: none; background: none;
+  color: var(--muted); cursor: pointer; font-size: 13px; flex: none;
+}
+.rowbtn:hover { color: var(--accent-text); background: var(--surface-2); }
+.rowbtn.del:hover { color: var(--crit); }
+.list-empty { text-align: center; color: var(--muted); font-style: italic; padding: 34px 0; }
+
+/* ---------- Modals ---------- */
+.modal-overlay {
+  position: fixed; inset: 0; background: var(--overlay); z-index: 50;
+  display: none; align-items: flex-start; justify-content: center;
+  padding: 4vh 16px; overflow-y: auto; backdrop-filter: blur(3px);
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px;
+  box-shadow: var(--shadow); width: 100%; max-width: 560px; padding: 24px 26px;
+}
+.modal.small { max-width: 400px; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.modal-head h2 { font-size: 22px; font-weight: 600; }
+.modal .close { background:none; border:none; color: var(--muted); font-size: 20px; cursor: pointer; }
+.modal .close:hover { color: var(--ink); }
+.set-section { border-top: 1px solid var(--hairline); margin-top: 18px; padding-top: 16px; }
+.set-section h3 { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 12px; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.set-row .lbl { font-size: 14px; color: var(--ink-2); }
+.set-row select, .set-row input {
+  background: var(--surface-2); color: var(--ink); border: 1px solid var(--hairline);
+  border-radius: 10px; padding: 8px 12px; font-size: 14px; font-family: inherit; outline: none;
+}
+.set-row select:focus, .set-row input:focus { border-color: var(--accent); }
+.cat-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.cat-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--hairline); border-radius: 999px;
+  padding: 5px 6px 5px 12px; font-size: 13px; color: var(--ink-2); background: var(--surface-2);
+}
+.cat-chip button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; width: 20px; height: 20px; border-radius: 50%; }
+.cat-chip button:hover { color: var(--crit); }
+.addcat { display: flex; gap: 8px; }
+.addcat input { flex: 1; }
+.muted-note { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.55; }
+.sync-status-line { font-size: 13px; color: var(--ink-2); margin-bottom: 10px; }
+.sync-status-line b { color: var(--ink); }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.err-text { color: var(--crit); font-size: 13px; margin-top: 6px; min-height: 18px; }
+
+/* ---------- Lock screen ---------- */
+body.locked { overflow: hidden; }
+body.locked > header, body.locked > main, body.locked > .modal-overlay { display: none !important; }
+#lockScreen {
+  position: fixed; inset: 0; z-index: 200;
+  display: none; align-items: center; justify-content: center;
+  background: var(--page-bg); background-attachment: fixed;
+  padding: 24px 18px;
+}
+body.locked #lockScreen { display: flex; }
+.lock-card {
+  width: 100%; max-width: 380px; text-align: center;
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 20px; box-shadow: var(--shadow);
+  padding: 34px 28px 28px; position: relative; overflow: hidden;
+}
+.lock-card::before {
+  content: ""; position: absolute; top: 0; left: 26px; right: 26px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--tile-shine), transparent);
+}
+.monogram {
+  width: 62px; height: 62px; margin: 0 auto 16px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #f0d98a 0%, var(--accent) 50%, #9d7c17 100%);
+  color: var(--on-accent); font-size: 22px; font-weight: 600; letter-spacing: .04em;
+  box-shadow: 0 6px 20px rgba(201,162,39,.28);
+}
+.lock-name { font-size: 22px; font-weight: 600; letter-spacing: .01em; }
+.lock-sub { font-size: 13px; color: var(--muted); margin-top: 6px; min-height: 38px; line-height: 1.5; }
+.pin-wrap { position: relative; margin: 20px 0 4px; }
+.pin-dots { display: flex; gap: 10px; justify-content: center; }
+.pin-dot {
+  width: 38px; height: 46px; border-radius: 10px;
+  border: 1px solid var(--hairline); background: var(--surface-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: var(--accent-text); transition: border-color .15s, transform .15s;
+}
+.pin-dot.filled { border-color: var(--accent); }
+.pin-wrap.focused .pin-dot.next { border-color: var(--accent); }
+#pinInput {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  opacity: 0; border: none; background: transparent;
+  font-size: 16px; /* keeps iOS from zooming on focus */
+  cursor: pointer; color: transparent;
+}
+.pin-wrap.shake { animation: shake .38s; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); } 40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); } 80% { transform: translateX(3px); }
+}
+.lock-err { color: var(--crit); font-size: 13px; min-height: 20px; margin-top: 10px; }
+.lock-foot { font-size: 11px; color: var(--muted); margin-top: 14px; letter-spacing: .1em; text-transform: uppercase; }
+.lock-hint { font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+.lock-hint a { color: var(--accent-text); cursor: pointer; text-decoration: underline; }
+.rec-wrap { margin: 18px 0 2px; display: flex; flex-direction: column; gap: 9px; }
+.rec-wrap input {
+  width: 100%; background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--hairline); border-radius: 10px;
+  padding: 11px 12px; font-size: 15px; outline: none; text-align: center;
+  font-family: ui-monospace, Consolas, monospace; letter-spacing: .06em; text-transform: uppercase;
+}
+.rec-wrap input:focus { border-color: var(--accent); }
+.reckey {
+  font-family: ui-monospace, Consolas, monospace; font-size: 17px; letter-spacing: .07em;
+  background: var(--surface-2); border: 1px solid var(--accent);
+  border-radius: 10px; padding: 13px 8px; margin: 12px 0 10px;
+  color: var(--accent-text); word-break: break-all; user-select: all;
+}
+.recbtns { display: flex; gap: 8px; }
+.recbtns .btn { flex: 1; padding: 9px 10px; font-size: 13px; }
+.reccheck {
+  display: flex; align-items: flex-start; gap: 8px; text-align: left;
+  font-size: 12.5px; color: var(--ink-2); margin-top: 12px; cursor: pointer; line-height: 1.45;
+}
+.reccheck input { margin-top: 2px; accent-color: var(--accent); flex: none; }
+
+/* ---------- Toast ---------- */
+#toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+  background: var(--surface-2); color: var(--ink); border: 1px solid var(--border);
+  border-radius: 999px; padding: 10px 22px; font-size: 14px; box-shadow: var(--shadow);
+  opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 99;
+  max-width: 90vw; text-align: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 40px; letter-spacing: .06em; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1000px) {
+  .kpis { grid-template-columns: repeat(3, 1fr); }
+  .charts { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  .wrap { padding: 0 14px; }
+  .brand .tag { display: none; }
+  .brand h1 { font-size: 22px; }
+  .month-label { font-size: 20px; min-width: 172px; }
+  .kpis { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .kpi .val { font-size: 20px; }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .form-foot .btn { width: 100%; }
+  .chart-box { height: 230px; }
+  .entry-row { flex-wrap: wrap; row-gap: 4px; }
+  .entry-main { flex-basis: 55%; }
+  .modal { padding: 20px 18px; }
+  .filterbar { gap: 6px; padding: 9px 10px; }
+  .dd-btn { padding: 5px 9px; font-size: 11.5px; gap: 5px; }
+  .dd-btn .k { font-size: 9px; letter-spacing: .08em; }
+  .dd-panel { min-width: 200px; }
+  .fb-search { flex-basis: 100%; order: 9; }
+  .fb-count { order: 10; }
+  .fb-clear { order: 11; }
+}
+</style>
+</head>
+<body class="locked">
+
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="monogram serif">VK</div>
+    <div class="lock-name serif" id="lockName">Vihaan Kalra</div>
+    <div class="lock-sub" id="lockSub">Unlocking your ledger…</div>
+    <div class="pin-wrap" id="pinWrap" style="display:none">
+      <div class="pin-dots" id="pinDots"></div>
+      <input id="pinInput" type="password" inputmode="numeric" autocomplete="off"
+             pattern="[0-9]*" maxlength="6" aria-label="6-digit passcode">
+    </div>
+    <div class="rec-wrap" id="recWrap" style="display:none">
+      <input id="recInput" type="text" autocomplete="off" spellcheck="false"
+             placeholder="XXXXX-XXXXX-XXXXX-XXXXX" aria-label="Recovery key">
+      <button class="btn btn-gold" id="recGo">Unlock</button>
+    </div>
+    <div class="lock-err" id="lockErr"></div>
+    <div class="lock-hint" id="lockHint"></div>
+    <div class="lock-foot">Aurum Ledger</div>
+  </div>
+</div>
+
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <h1 class="serif">Aurum <em>Ledger</em></h1>
+        <span class="tag">Daily Expense Atelier</span>
+      </div>
+      <div class="top-actions">
+        <button class="sync-chip" id="syncChip" title="Cloud sync status">
+          <span class="sync-dot" id="syncDot"></span><span id="syncText">Connecting…</span>
+        </button>
+        <button class="iconbtn" id="themeBtn" title="Toggle dark / light">◐</button>
+        <button class="iconbtn" id="settingsBtn" title="Settings">⚙</button>
+        <button class="iconbtn" id="lockBtn" title="Lock now">🔒</button>
+      </div>
+    </div>
+    <div class="monthbar">
+      <div class="month-nav">
+        <button class="navbtn" id="prevMonth" title="Previous month">‹</button>
+        <div class="month-label serif" id="monthLabel">—</div>
+        <button class="navbtn" id="nextMonth" title="Next month">›</button>
+        <button class="todaybtn" id="jumpToday">This month</button>
+      </div>
+      <button class="budget-pill" id="budgetPill"><span class="set">＋ Set budget for this month</span></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Filters — compact dropdown row -->
+  <div class="filterbar">
+    <div class="dd" id="ddPeriod">
+      <button class="dd-btn" data-dd="Period"><span class="k">Period</span><span class="v" id="vPeriod">—</span><span class="c">▼</span></button>
+      <div class="dd-panel" id="panelPeriod"></div>
+    </div>
+    <div class="dd" id="ddCat">
+      <button class="dd-btn" data-dd="Category"><span class="k">Category</span><span class="v" id="vCat">All</span><span class="c">▼</span></button>
+      <div class="dd-panel" id="panelCat"></div>
+    </div>
+    <div class="dd" id="ddAmt">
+      <button class="dd-btn" data-dd="Amount"><span class="k">Amount</span><span class="v" id="vAmt">Any</span><span class="c">▼</span></button>
+      <div class="dd-panel" id="panelAmt"></div>
+    </div>
+    <div class="dd" id="ddMode">
+      <button class="dd-btn" data-dd="Mode"><span class="k">Mode</span><span class="v" id="vMode">All</span><span class="c">▼</span></button>
+      <div class="dd-panel right" id="panelMode"></div>
+    </div>
+    <input type="search" class="fb-search" id="fbSearch" placeholder="Search notes…">
+    <span class="fb-count" id="fbCount"></span>
+    <button class="fb-clear" id="fbClear" style="display:none">Clear</button>
+  </div>
+
+  <!-- KPI tiles -->
+  <div class="kpis" id="kpis"></div>
+
+  <!-- New entry -->
+  <div class="card">
+    <div class="card-title">
+      <h2 class="serif" id="formTitle">Record an expense</h2>
+      <span class="hint" id="formHint">Amount, category &amp; payment mode</span>
+    </div>
+    <form id="entryForm" autocomplete="off">
+      <div class="form-grid">
+        <div class="field">
+          <label for="fAmount">Amount</label>
+          <input type="number" id="fAmount" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required>
+        </div>
+        <div class="field">
+          <label for="fCat">Category</label>
+          <select id="fCat" required></select>
+        </div>
+        <div class="field">
+          <label for="fMode">Payment mode</label>
+          <select id="fMode" required>
+            <option>Cash</option>
+            <option>Card</option>
+            <option>UPI - Mobikwik</option>
+            <option>UPI - Bank</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fDate">Date</label>
+          <input type="date" id="fDate" required>
+        </div>
+      </div>
+      <div class="form-foot">
+        <div class="field">
+          <label for="fNote">Note</label>
+          <textarea id="fNote" rows="1" placeholder="e.g. Dinner at Olive Bar, split with Rohan…"></textarea>
+        </div>
+        <button type="submit" class="btn btn-gold" id="saveBtn">Add expense</button>
+        <button type="button" class="btn btn-ghost" id="cancelEdit" style="display:none">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts">
+    <div class="chart-card">
+      <h2 class="serif" id="dailyTitle">Daily spend</h2>
+      <div class="sub" id="dailySub">Across the month</div>
+      <div class="chart-box"><canvas id="dailyChart"></canvas><div class="chart-empty" id="dailyEmpty" style="display:none">No entries this month yet</div></div>
+    </div>
+    <div class="chart-card">
+      <h2 class="serif">By category</h2>
+      <div class="sub">Where the money went</div>
+      <div class="chart-box"><canvas id="catChart"></canvas><div class="chart-empty" id="catEmpty" style="display:none">No entries this month yet</div></div>
+    </div>
+    <div class="chart-card">
+      <h2 class="serif">Payment modes</h2>
+      <div class="sub">Cash · Card · UPI split</div>
+      <div class="chart-box"><canvas id="modeChart"></canvas><div class="chart-empty" id="modeEmpty" style="display:none">No entries this month yet</div></div>
+    </div>
+    <div class="chart-card">
+      <h2 class="serif">Monthly trend</h2>
+      <div class="sub" id="trendSub">Last 12 months</div>
+      <div class="chart-box"><canvas id="trendChart"></canvas><div class="chart-empty" id="trendEmpty" style="display:none">Nothing recorded yet</div></div>
+    </div>
+  </div>
+
+  <!-- Entries -->
+  <div class="card">
+    <div class="card-title">
+      <h2 class="serif">Entries</h2>
+      <span class="hint" id="entryCount"></span>
+    </div>
+    <div id="entryList"></div>
+  </div>
+
+  <footer>AURUM LEDGER · crafted for the discerning spender</footer>
+</main>
+
+<!-- Budget modal -->
+<div class="modal-overlay" id="budgetModal">
+  <div class="modal small">
+    <div class="modal-head"><h2 class="serif" id="budgetModalTitle">Budget</h2><button class="close" data-close="budgetModal">✕</button></div>
+    <p class="muted-note" style="margin-bottom:12px">Budgets are optional and per-month — setting or changing this month never alters a past month.</p>
+    <div class="field">
+      <label for="budgetInput">Monthly budget amount</label>
+      <input type="number" id="budgetInput" inputmode="decimal" min="0" step="1" placeholder="e.g. 25000">
+    </div>
+    <div class="btnrow" style="margin-top:14px">
+      <button class="btn btn-gold" id="budgetSave">Save budget</button>
+      <button class="btn btn-danger" id="budgetRemove">Remove</button>
+      <button class="btn btn-ghost" data-close="budgetModal">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync / account modal -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal small">
+    <div class="modal-head"><h2 class="serif">Cloud sync</h2><button class="close" data-close="authModal">✕</button></div>
+    <div id="authArea"></div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-head"><h2 class="serif">Settings</h2><button class="close" data-close="settingsModal">✕</button></div>
+
+    <div class="set-section" style="border-top:none;margin-top:8px;padding-top:0">
+      <h3>Appearance &amp; currency</h3>
+      <div class="set-row">
+        <span class="lbl">Theme</span>
+        <select id="setTheme">
+          <option value="dark">Dark · Charcoal &amp; Gold</option>
+          <option value="light">Light · Ivory &amp; Gold</option>
+        </select>
+      </div>
+      <div class="set-row">
+        <span class="lbl">Currency</span>
+        <select id="setCurrency">
+          <option value="INR">₹ INR — Indian Rupee</option>
+          <option value="USD">$ USD — US Dollar</option>
+          <option value="EUR">€ EUR — Euro</option>
+          <option value="GBP">£ GBP — British Pound</option>
+          <option value="AED">د.إ AED — UAE Dirham</option>
+          <option value="SGD">S$ SGD — Singapore Dollar</option>
+          <option value="AUD">A$ AUD — Australian Dollar</option>
+          <option value="CAD">C$ CAD — Canadian Dollar</option>
+          <option value="JPY">¥ JPY — Japanese Yen</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="set-section">
+      <h3>Categories</h3>
+      <div class="cat-list" id="catManager"></div>
+      <div class="addcat">
+        <input type="text" id="newCatName" placeholder="New category name" maxlength="28">
+        <button class="btn btn-ghost" id="addCatBtn">Add</button>
+      </div>
+      <p class="muted-note">Removing a category keeps its past entries; they simply show under the old name.</p>
+    </div>
+
+    <div class="set-section">
+      <h3>Backup</h3>
+      <div class="btnrow">
+        <button class="btn btn-ghost" id="exportBtn">Export JSON</button>
+        <button class="btn btn-ghost" id="importBtn">Import JSON</button>
+        <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+      </div>
+      <p class="muted-note">Export downloads a full backup of entries, budgets, categories and settings. Import merges a backup into this device (newest edit wins). <b>The exported file is plain readable JSON, not encrypted</b> — keep it somewhere private, and treat it as your safety net if you ever lose both the passcode and the recovery key.</p>
+    </div>
+
+    <div class="set-section">
+      <h3>Passcode &amp; encryption</h3>
+      <div class="btnrow">
+        <button class="btn btn-ghost" id="changePinBtn">Change passcode</button>
+        <button class="btn btn-ghost" id="newRecBtn">New recovery key</button>
+        <button class="btn btn-ghost" id="lockNowBtn">Lock now</button>
+      </div>
+      <p class="muted-note">Your ledger is encrypted in this browser before it is saved or synced, using a key that only your passcode (or your recovery key) can unwrap. Nobody who reads this page's source — and nobody with access to the database — can read your entries without it. Changing the passcode re-wraps that key and leaves your data untouched.</p>
+      <p class="muted-note"><b>A 6-digit code is convenient but low-entropy.</b> Someone who obtains the encrypted copy could grind through all million combinations offline; the encryption is deliberately slow to make that expensive, not impossible. Keep the recovery key private, and export a backup now and then.</p>
+    </div>
+
+    <div class="set-section">
+      <h3>Danger zone</h3>
+      <button class="btn btn-danger" id="wipeBtn">Erase all entries</button>
+      <p class="muted-note">This clears every entry and budget — and because your ledger syncs, it erases them on your other devices too. Export a backup first if you might want the data back.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   AURUM LEDGER — single-file daily expense tracker
+
+   SECURITY MODEL
+   The ledger is encrypted in the browser before it is stored or synced.
+   A random 256-bit master key (MK) encrypts the data with AES-GCM. MK itself
+   is stored only in wrapped form: once under a key derived from the passcode,
+   and once under a key derived from a recovery key. Neither the passcode nor
+   MK is ever written down or transmitted, so the copy in Firestore — and in
+   this device's localStorage — is ciphertext that the page source cannot
+   unlock. Changing the passcode re-wraps MK and leaves the data untouched.
+   A wrong passcode simply fails to decrypt: AES-GCM is authenticated, so
+   there is no separate hash for an attacker to grind against.
+===================================================================== */
+
+const LS_ENV    = "aurum-env-v2";      // encrypted envelope for this device
+const LS_LEGACY = "aurum-state-v1";    // pre-encryption plaintext, migrated then removed
+const LS_THEME  = "aurum-theme";
+
+/* Firebase project config. A web API key is a public identifier, not a secret —
+   access is governed by the Firestore security rules, which expose exactly one
+   document: trackers/<LEDGER_ID>. Every device running this file reads and writes
+   that document, so the ledger syncs with no sign-in step. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBXYhzTB0LG4V95y_AkKlWcZJqGc9GPI3Q",
+  authDomain: "expense-tracker-vk.firebaseapp.com",
+  projectId: "expense-tracker-vk",
+  storageBucket: "expense-tracker-vk.firebasestorage.app",
+  messagingSenderId: "12441117830",
+  appId: "1:12441117830:web:bcc80c4561cacba7ad5d07"
+};
+const LEDGER_ID = "aurum-06f74332c6c2869c7702542c3012e6b3";
+
+const PAY_MODES = ["Cash", "Card", "UPI - Mobikwik", "UPI - Bank"];
+const DEFAULT_CATS = ["Food & Dining","Groceries","Transport","Shopping","Bills & Utilities",
+  "Rent / EMI","Entertainment","Health","Education","Travel","Personal Care","Investments","Gifts","Others"];
+const OTHER_GRAY = "#898781";
+
+const now = () => Date.now();
+const $ = id => document.getElementById(id);
+
+/* =====================================================================
+   CRYPTO
+===================================================================== */
+const PIN_ITER = 600000;   // passcode is low-entropy, so make each guess expensive
+const REC_ITER = 200000;   // recovery key is high-entropy; no need to punish it
+const ENV_V = 2;
+
+function b64(bytes) { let s = ""; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s); }
+function unb64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+function utf8(s) { return new TextEncoder().encode(s); }
+function fromUtf8(b) { return new TextDecoder().decode(b); }
+function randBytes(n) { return crypto.getRandomValues(new Uint8Array(n)); }
+function cryptoAvailable() { return !!(window.crypto && crypto.subtle && crypto.subtle.importKey); }
+
+async function deriveKey(secret, saltBytes, iter) {
+  const base = await crypto.subtle.importKey("raw", utf8(secret), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    { name:"PBKDF2", salt: saltBytes, iterations: iter, hash:"SHA-256" },
+    base, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]);
+}
+async function importMK(raw) {
+  return crypto.subtle.importKey("raw", raw, { name:"AES-GCM" }, false, ["encrypt","decrypt"]);
+}
+async function aesEnc(key, bytes) {
+  const iv = randBytes(12);
+  const ct = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, key, bytes);
+  return { iv: b64(iv), ct: b64(new Uint8Array(ct)) };
+}
+async function aesDec(key, ivB64, ctB64) {
+  const out = await crypto.subtle.decrypt(
+    { name:"AES-GCM", iv: unb64(ivB64) }, key, unb64(ctB64));
+  return new Uint8Array(out);
+}
+
+/* Recovery key: 20 chars from a confusable-free alphabet ≈ 100 bits. */
+const REC_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function makeRecoveryKey() {
+  const bytes = randBytes(20);
+  let out = "";
+  for (let i = 0; i < 20; i++) {
+    if (i && i % 5 === 0) out += "-";
+    out += REC_ALPHABET[bytes[i] % REC_ALPHABET.length];
+  }
+  return out;
+}
+function normalizeRecovery(s) { return String(s||"").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+
+/* Wrap/unwrap the master key under a secret. */
+async function wrapMK(secret, mkRaw, iter) {
+  const salt = randBytes(16);
+  const key = await deriveKey(secret, salt, iter);
+  const { iv, ct } = await aesEnc(key, mkRaw);
+  return { salt: b64(salt), iter, iv, ct };
+}
+async function unwrapMK(secret, wrap) {
+  const key = await deriveKey(secret, unb64(wrap.salt), wrap.iter || PIN_ITER);
+  return await aesDec(key, wrap.iv, wrap.ct);      // throws if the secret is wrong
+}
+
+let mkRaw = null, mkKey = null;      // in memory only, cleared on lock
+let envelope = null;                 // last known envelope (holds the wraps)
+
+async function encryptPayload(payload) {
+  return await aesEnc(mkKey, utf8(JSON.stringify(payload)));
+}
+async function decryptPayload(data) {
+  return JSON.parse(fromUtf8(await aesDec(mkKey, data.iv, data.ct)));
+}
+function payloadOf(s) {
+  return { entries: s.entries, categories: s.categories, budgets: s.budgets,
+           settings: s.settings, meta: s.meta };
+}
+
+/* ---------- state ---------- */
+function blankState() {
+  return {
+    entries: {},                       // id -> {id,date,amount,cat,mode,note,updatedAt,deleted}
+    categories: DEFAULT_CATS.map((n,i)=>({ name:n, slot: i<8 ? i : null })),
+    budgets: {},                       // 'YYYY-MM' -> {amount, updatedAt}
+    settings: { currency: "INR" },
+    meta: { categories: 0, settings: 0 }
+  };
+}
+let state = blankState();              // plaintext, in memory only while unlocked
+let viewMonth = monthKey(new Date());  // 'YYYY-MM' currently displayed
+let editingId = null;
+let charts = {};
+let appLocked = true;                  // nothing renders until the passcode clears
+let resolveFirstSnapshot;
+const firstSnapshotPromise = new Promise(r => { resolveFirstSnapshot = r; });
+
+/* Normalise a decrypted payload back into a full state object. */
+function adoptPayload(s) {
+  const b = blankState();
+  return { ...b, ...s,
+    settings: { ...b.settings, ...(s.settings||{}) },
+    meta: { ...b.meta, ...(s.meta||{}) },
+    entries: s.entries||{}, budgets: s.budgets||{},
+    categories: Array.isArray(s.categories) && s.categories.length ? s.categories : b.categories };
+}
+function localEnvelope() {
+  try {
+    const raw = localStorage.getItem(LS_ENV);
+    const e = raw ? JSON.parse(raw) : null;
+    return e && e.v === ENV_V && e.data && e.wrapPin ? e : null;
+  } catch { return null; }
+}
+/* Persist the encrypted envelope for this device. Called on every change, so
+   the plaintext ledger never touches disk. */
+async function saveLocal() {
+  if (!mkKey || !envelope) return;
+  envelope.data = await encryptPayload(payloadOf(state));
+  envelope.updatedAt = now();
+  localStorage.setItem(LS_ENV, JSON.stringify(envelope));
+}
+function commit() {
+  saveLocal().then(() => scheduleSync()).catch(e => {
+    console.error(e);
+    toast("Couldn't save — your change is only on screen");
+  });
+  renderAll();
+}
+
+/* ---------- helpers ---------- */
+function monthKey(d) { return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0"); }
+function todayStr() { const d = new Date(); return monthKey(d) + "-" + String(d.getDate()).padStart(2,"0"); }
+function daysInMonth(mk) { const [y,m] = mk.split("-").map(Number); return new Date(y, m, 0).getDate(); }
+function shiftMonth(mk, delta) {
+  const [y,m] = mk.split("-").map(Number);
+  const d = new Date(y, m-1+delta, 1);
+  return monthKey(d);
+}
+function monthLabelOf(mk) {
+  const [y,m] = mk.split("-").map(Number);
+  return new Date(y, m-1, 1).toLocaleDateString("en-GB", { month:"long", year:"numeric" });
+}
+function uid() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-"+Math.random().toString(36).slice(2)); }
+function esc(s) { return String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function fmtMoney(n, opts={}) {
+  const cur = state.settings.currency || "INR";
+  const locale = cur === "INR" ? "en-IN" : undefined;
+  try {
+    return new Intl.NumberFormat(locale, {
+      style:"currency", currency:cur,
+      minimumFractionDigits:0, maximumFractionDigits: Math.abs(n)%1 ? 2 : 0,
+      ...(opts.compact ? {notation:"compact", maximumFractionDigits:1} : {})
+    }).format(n);
+  } catch { return cur + " " + (Math.round(n*100)/100).toLocaleString(); }
+}
+function activeEntries() { return Object.values(state.entries).filter(e => !e.deleted); }
+function catColor(name) {
+  const c = state.categories.find(c => c.name === name);
+  if (c && c.slot != null && c.slot >= 0 && c.slot < 8) return cssVar("--s" + (c.slot+1));
+  return OTHER_GRAY;
+}
+function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+
+/* stable stringify for change detection (sorted keys, skips undefined) */
+function stable(o) {
+  if (o === null || typeof o !== "object") return JSON.stringify(o);
+  if (Array.isArray(o)) return "[" + o.map(stable).join(",") + "]";
+  return "{" + Object.keys(o).sort().filter(k => o[k] !== undefined)
+    .map(k => JSON.stringify(k) + ":" + stable(o[k])).join(",") + "}";
+}
+
+/* ---------- merge (newest edit wins, per entry / per budget month) ---------- */
+function mergeStates(a, b) {
+  const m = blankState();
+  m.entries = {};
+  new Set([...Object.keys(a.entries||{}), ...Object.keys(b.entries||{})]).forEach(id => {
+    const ea = (a.entries||{})[id], eb = (b.entries||{})[id];
+    m.entries[id] = !ea ? eb : !eb ? ea : ((ea.updatedAt||0) >= (eb.updatedAt||0) ? ea : eb);
+  });
+  m.budgets = {};
+  new Set([...Object.keys(a.budgets||{}), ...Object.keys(b.budgets||{})]).forEach(k => {
+    const ba = (a.budgets||{})[k], bb = (b.budgets||{})[k];
+    m.budgets[k] = !ba ? bb : !bb ? ba : ((ba.updatedAt||0) >= (bb.updatedAt||0) ? ba : bb);
+  });
+  const am = a.meta||{}, bm = b.meta||{};
+  if ((am.categories||0) >= (bm.categories||0)) { m.categories = a.categories || m.categories; m.meta.categories = am.categories||0; }
+  else { m.categories = b.categories || m.categories; m.meta.categories = bm.categories||0; }
+  if ((am.settings||0) >= (bm.settings||0)) { m.settings = { ...m.settings, ...(a.settings||{}) }; m.meta.settings = am.settings||0; }
+  else { m.settings = { ...m.settings, ...(b.settings||{}) }; m.meta.settings = bm.settings||0; }
+  return m;
+}
+
+/* =====================================================================
+   FIREBASE SYNC (optional, local-first)
+===================================================================== */
+const FB_VER = "10.14.1";
+let fb = { app:null, db:null, ref:null, unsub:null, ready:false };
+let syncTimer = null;
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error("Failed to load " + src));
+    document.head.appendChild(s);
+  });
+}
+async function initFirebase() {
+  if (!FIREBASE_CONFIG) { setSync("off", "Local only"); return; }
+  setSync("busy", "Connecting…");
+  try {
+    if (!window.firebase) {
+      const base = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
+      await loadScript(base + "firebase-app-compat.js");
+      await loadScript(base + "firebase-firestore-compat.js");
+    }
+    fb.app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
+    fb.db = firebase.firestore();
+    fb.ref = fb.db.collection("trackers").doc(LEDGER_ID);
+    fb.ready = true;
+    setSync("busy", "Syncing…");
+    fb.unsub = fb.ref.onSnapshot(onRemoteSnapshot, err => {
+      console.error(err);
+      resolveFirstSnapshot();
+      setSync("err", "Sync error");
+      renderSyncModal();
+    });
+  } catch (e) {
+    console.error(e);
+    resolveFirstSnapshot();
+    setSync("err", "Offline");
+    renderSyncModal();
+  }
+}
+let remoteEnvelope = null;             // newest envelope seen from the cloud
+
+/* The remote copy is ciphertext, so merging means decrypt → merge → re-encrypt.
+   Until the passcode is entered there is no key, so we only record the envelope
+   (which is what the lock screen needs to tell first-run from returning). */
+async function onRemoteSnapshot(snap) {
+  if (snap.metadata && snap.metadata.hasPendingWrites) return;
+  const remote = snap.exists ? (snap.data() || null) : null;
+  remoteEnvelope = remote && remote.v === ENV_V && remote.data ? remote : null;
+  resolveFirstSnapshot();
+  if (appLocked || !mkKey) { if (remoteEnvelope) setSync("ok", "Locked"); return; }
+
+  if (!remoteEnvelope) { pushRemote(); return; }          // cloud is empty or pre-encryption
+  let payload;
+  try {
+    payload = await decryptPayload(remoteEnvelope.data);
+  } catch (e) {
+    /* A different passcode generation wrote this — MK no longer matches. */
+    console.error("remote decrypt failed", e);
+    setSync("err", "Passcode mismatch");
+    renderSyncModal();
+    return;
+  }
+  const merged = mergeStates(state, adoptPayload(payload));
+  const ms = stable(payloadOf(merged));
+  if (ms !== stable(payloadOf(state))) { state = merged; await saveLocal(); renderAll(); }
+  if (ms !== stable(payloadOf(adoptPayload(payload)))) pushRemote();
+  else { setSync("ok", "Synced"); renderSyncModal(); }
+}
+async function pushRemote() {
+  if (!fb.ready || !fb.ref || !mkKey || !envelope) return;
+  setSync("busy", "Syncing…");
+  try {
+    const out = {
+      v: ENV_V,
+      wrapPin: envelope.wrapPin,
+      wrapRecovery: envelope.wrapRecovery,
+      data: await encryptPayload(payloadOf(state)),
+      updatedAt: now()
+    };
+    await fb.ref.set(out);
+    envelope.data = out.data;
+    setSync("ok", "Synced");
+  } catch (e) {
+    console.error(e);
+    setSync("err", "Sync error");
+  }
+  renderSyncModal();
+}
+function scheduleSync() {
+  if (!fb.ready || !mkKey) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(pushRemote, 900);
+}
+function setSync(kind, text) {
+  const dot = $("syncDot");
+  dot.className = "sync-dot" + (kind==="ok" ? " ok" : kind==="busy" ? " busy" : kind==="err" ? " err" : "");
+  $("syncText").textContent = text;
+  fb.status = { kind, text };
+}
+
+/* ---------- sync status modal ---------- */
+function renderSyncModal() {
+  const area = $("authArea");
+  if (!area) return;
+  const st = fb.status || { kind:"off", text:"Local only" };
+  let body;
+  if (!FIREBASE_CONFIG) {
+    body = `Cloud sync isn't configured in this build — data stays on this device. Use Export / Import in Settings to move it between devices.`;
+  } else if (st.kind === "err") {
+    body = `<b>Can't reach the cloud right now.</b> Your entries are still saved safely on this device and will upload automatically once the connection returns.`;
+  } else if (st.kind === "ok") {
+    body = `<b>Everything is synced.</b> Open this page on your phone or another computer, enter the same passcode, and the ledger appears.`;
+  } else if (st.kind === "off" && st.text === "Locked") {
+    body = `Ledger locked — sync resumes once you unlock.`;
+  } else {
+    body = `Syncing your ledger…`;
+  }
+  area.innerHTML = `
+    <p class="sync-status-line">${body}</p>
+    <p class="muted-note">Entries, budgets, categories and currency are <b>encrypted on this device</b> before syncing, then merged across devices — the most recent edit of each entry wins, so editing on two devices never loses data. The stored copy is ciphertext; your passcode is what decrypts it.</p>
+    <div class="btnrow">
+      <button class="btn btn-gold" id="syncNow">Sync now</button>
+    </div>`;
+  $("syncNow").onclick = () => {
+    if (!fb.ready) { toast("Cloud sync unavailable — data is saved on this device"); return; }
+    pushRemote();
+    toast("Syncing…");
+  };
+}
+
+/* =====================================================================
+   RENDERING
+===================================================================== */
+/* ---------------------------------------------------------------------
+   Filter engine — one predicate feeds the KPIs, every chart and the list
+--------------------------------------------------------------------- */
+const RANGE_PRESETS = [
+  { id:"month",  label:"This month" },
+  { id:"prev",   label:"Last month" },
+  { id:"3m",     label:"3 months" },
+  { id:"6m",     label:"6 months" },
+  { id:"ytd",    label:"Year" },
+  { id:"all",    label:"All time" },
+  { id:"custom", label:"Custom" }
+];
+let flt = { range:"month", from:"", to:"", cats:[], modes:[], min:null, max:null, q:"" };
+
+function pad2(n) { return String(n).padStart(2,"0"); }
+function monthStart(mk) { return mk + "-01"; }
+function monthEnd(mk) { return mk + "-" + pad2(daysInMonth(mk)); }
+function dateAdd(d, n) {
+  const [y,m,dd] = d.split("-").map(Number);
+  const x = new Date(y, m-1, dd+n);
+  return x.getFullYear() + "-" + pad2(x.getMonth()+1) + "-" + pad2(x.getDate());
+}
+function daysBetween(a, b) {
+  return Math.round((new Date(b+"T00:00:00") - new Date(a+"T00:00:00")) / 86400000);
+}
+
+/* Selected window, with sentinels where it is open-ended. */
+function rawBounds() {
+  switch (flt.range) {
+    case "prev": { const mk = shiftMonth(viewMonth,-1); return [monthStart(mk), monthEnd(mk)]; }
+    case "3m":   return [monthStart(shiftMonth(viewMonth,-2)), monthEnd(viewMonth)];
+    case "6m":   return [monthStart(shiftMonth(viewMonth,-5)), monthEnd(viewMonth)];
+    case "ytd":  return [viewMonth.slice(0,4) + "-01-01", monthEnd(viewMonth)];
+    case "all":  return ["0000-01-01", "9999-12-31"];
+    case "custom": return [flt.from || "0000-01-01", flt.to || "9999-12-31"];
+    default:     return [monthStart(viewMonth), monthEnd(viewMonth)];
+  }
+}
+/* Same window clamped to real data — used for buckets, labels and averages
+   so an open-ended range doesn't create thousands of empty columns. */
+function dataBounds() {
+  const [f,t] = rawBounds();
+  if (f !== "0000-01-01" && t !== "9999-12-31") return [f,t];
+  const ds = activeEntries().map(e => e.date).sort();
+  const today = todayStr();
+  const lo = ds.length ? ds[0] : today;
+  const hi = ds.length ? ds[ds.length-1] : today;
+  return [ f === "0000-01-01" ? lo : f, t === "9999-12-31" ? (hi > today ? hi : today) : t ];
+}
+function passesDate(e) { const [f,t] = rawBounds(); return e.date >= f && e.date <= t; }
+function passesRest(e) {
+  if (flt.cats.length && !flt.cats.includes(e.cat)) return false;
+  if (flt.modes.length && !flt.modes.includes(e.mode)) return false;
+  if (flt.min != null && e.amount < flt.min) return false;
+  if (flt.max != null && e.amount > flt.max) return false;
+  if (flt.q) {
+    const q = flt.q.toLowerCase();
+    if (!(e.note||"").toLowerCase().includes(q) && !e.cat.toLowerCase().includes(q)) return false;
+  }
+  return true;
+}
+function passes(e) { return passesDate(e) && passesRest(e); }
+function narrowsSpend() {
+  return flt.cats.length > 0 || flt.modes.length > 0 || flt.min != null || flt.max != null || !!flt.q;
+}
+function anyFilterActive() { return narrowsSpend() || flt.range !== "month"; }
+
+/* Whole calendar months the range covers, or null when it cuts months short.
+   Budgets are monthly, so they only make sense over whole months. */
+function wholeMonths() {
+  if (flt.range === "all") return null;
+  const [f,t] = rawBounds();
+  if (f.slice(8) !== "01") return null;
+  const tMk = t.slice(0,7);
+  if (t !== monthEnd(tMk)) return null;
+  const out = [];
+  let mk = f.slice(0,7);
+  while (mk <= tMk && out.length < 400) { out.push(mk); mk = shiftMonth(mk,1); }
+  return out.length ? out : null;
+}
+function isSingleMonth() { const wm = wholeMonths(); return wm && wm.length === 1 ? wm[0] : null; }
+
+function computeView() {
+  const list = activeEntries().filter(passes);
+  const total = list.reduce((s,e)=>s+e.amount, 0);
+  const [bf,bt] = dataBounds();
+  const span = Math.max(1, daysBetween(bf,bt) + 1);
+  const byMonth = span > 62;                     // day columns stop being readable past ~2 months
+  const bucket = {}, byCat = {}, byMode = {};
+  const tStr = todayStr();
+  let todaySpend = 0;
+  list.forEach(e => {
+    const k = byMonth ? e.date.slice(0,7) : e.date;
+    bucket[k] = (bucket[k]||0) + e.amount;
+    byCat[e.cat] = (byCat[e.cat]||0) + e.amount;
+    byMode[e.mode] = (byMode[e.mode]||0) + e.amount;
+    if (e.date === tStr) todaySpend += e.amount;
+  });
+  const keys = [];
+  if (byMonth) {
+    let mk = bf.slice(0,7); const end = bt.slice(0,7);
+    while (mk <= end && keys.length < 400) { keys.push(mk); mk = shiftMonth(mk,1); }
+  } else {
+    let d = bf;
+    while (d <= bt && keys.length < 400) { keys.push(d); d = dateAdd(d,1); }
+  }
+  const values = keys.map(k => bucket[k] || 0);
+
+  /* Average over elapsed days only, so a current or future window isn't diluted. */
+  const effEnd = bt > tStr && bf <= tStr ? tStr : bt;
+  const elapsed = Math.max(1, daysBetween(bf, effEnd) + 1);
+
+  let budget = null, budgetMonths = null;
+  if (!narrowsSpend()) {
+    const wm = wholeMonths();
+    if (wm) {
+      const sum = wm.reduce((s,mk) => {
+        const b = state.budgets[mk];
+        return s + (b && b.amount > 0 ? b.amount : 0);
+      }, 0);
+      if (sum > 0) { budget = sum; budgetMonths = wm; }
+    }
+  }
+  const [rf,rt] = rawBounds();
+  return { list, total, keys, values, byMonth, byCat, byMode, todaySpend,
+           peak: values.length ? Math.max(...values) : 0,
+           topCat: Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0] || null,
+           topMode: Object.entries(byMode).sort((a,b)=>b[1]-a[1])[0] || null,
+           from: bf, to: bt, span, elapsed, budget, budgetMonths,
+           todayInRange: tStr >= rf && tStr <= rt,
+           avg: total / elapsed };
+}
+
+/* Equivalent preceding window, for the "vs previous" delta. */
+function prevPeriod(V) {
+  if (flt.range === "all") return null;
+  const wm = wholeMonths();
+  let pf, pt;
+  if (wm) {
+    const n = wm.length;
+    pf = monthStart(shiftMonth(wm[0], -n));
+    pt = monthEnd(shiftMonth(wm[wm.length-1], -n));
+  } else {
+    pt = dateAdd(V.from, -1);
+    pf = dateAdd(pt, -(V.span - 1));
+  }
+  const tot = activeEntries()
+    .filter(e => e.date >= pf && e.date <= pt && passesRest(e))
+    .reduce((s,e)=>s+e.amount, 0);
+  return { total: tot, label: wm ? (wm.length === 1 ? "vs last month" : `vs previous ${wm.length} months`)
+                                : "vs previous period" };
+}
+
+function fmtDay(d, withYear) {
+  const [y,m,dd] = d.split("-").map(Number);
+  return new Date(y,m-1,dd).toLocaleDateString("en-GB",
+    { day:"numeric", month:"short", ...(withYear ? {year:"numeric"} : {}) });
+}
+function rangeLabel() {
+  const [f,t] = rawBounds();
+  if (flt.range === "all") {
+    const [bf,bt] = dataBounds();
+    return activeEntries().length ? "All time" : "All time";
+  }
+  const wm = wholeMonths();
+  if (wm && wm.length === 1) return monthLabelOf(wm[0]);
+  if (wm) {
+    const a = monthLabelOf(wm[0]).split(" "), b = monthLabelOf(wm[wm.length-1]).split(" ");
+    return a[1] === b[1] ? `${a[0].slice(0,3)} – ${b[0].slice(0,3)} ${b[1]}`
+                         : `${a[0].slice(0,3)} ${a[1]} – ${b[0].slice(0,3)} ${b[1]}`;
+  }
+  if (f === "0000-01-01") return "Up to " + fmtDay(t, true);
+  if (t === "9999-12-31") return "From " + fmtDay(f, true);
+  return fmtDay(f) + " – " + fmtDay(t, true);
+}
+
+function renderAll() {
+  if (appLocked) return;               // charts size wrong while hidden; re-rendered on unlock
+  const V = computeView();
+  renderRangeBar(V);
+  renderFilterBar(V);
+  renderKPIs(V);
+  renderCharts(V);
+  renderList(V);
+  renderCatSelects();
+  renderCatManager();
+  $("setCurrency").value = state.settings.currency || "INR";
+}
+
+function renderRangeBar(V) {
+  $("monthLabel").textContent = rangeLabel();
+  const single = isSingleMonth();
+  const stepping = flt.range !== "all" && flt.range !== "custom";
+  $("prevMonth").style.display = stepping ? "" : "none";
+  $("nextMonth").style.display = stepping ? "" : "none";
+  const pill = $("budgetPill");
+  if (single) {
+    pill.style.display = "";
+    const b = state.budgets[single];
+    if (b && b.amount > 0) pill.innerHTML = `Budget <b>${fmtMoney(b.amount)}</b> <span class="set">✎</span>`;
+    else pill.innerHTML = `<span class="set">＋ Set budget for ${esc(monthLabelOf(single).split(" ")[0])}</span>`;
+  } else {
+    pill.style.display = "none";
+  }
+}
+
+function renderKPIs(V) {
+  const tiles = [];
+  const prev = prevPeriod(V);
+  let deltaHtml = "";
+  if (prev && prev.total > 0) {
+    const pct = ((V.total - prev.total) / prev.total) * 100;
+    const cls = pct <= 0 ? "delta-down" : "delta-up";
+    deltaHtml = `<span class="${cls}">${pct <= 0 ? "▼" : "▲"} ${Math.abs(pct).toFixed(0)}%</span> ${prev.label}`;
+  }
+  tiles.push(`<div class="kpi"><div class="lbl">Total spent</div><div class="val">${fmtMoney(V.total)}</div>
+      <div class="sub">${deltaHtml}</div></div>`);
+
+  if (V.budget) {
+    const used = (V.total / V.budget) * 100;
+    const left = V.budget - V.total;
+    const color = used > 100 ? "var(--crit)" : used > 90 ? "var(--serious)" : used > 75 ? "var(--warn)" : "var(--good)";
+    const scope = V.budgetMonths.length > 1 ? ` across ${V.budgetMonths.length} months` : "";
+    tiles.push(`<div class="kpi"><div class="lbl">Budget remaining</div>
+      <div class="val">${fmtMoney(Math.abs(left))}</div>
+      <div class="sub">${left >= 0 ? used.toFixed(0)+"% of "+fmtMoney(V.budget)+" used"+scope
+                                   : "over budget · "+used.toFixed(0)+"% used"+scope}</div>
+      <div class="meter"><i style="width:${Math.min(used,100)}%;background:${color}"></i></div></div>`);
+  }
+
+  if (V.todayInRange) {
+    tiles.push(`<div class="kpi"><div class="lbl">Spent today</div><div class="val">${fmtMoney(V.todaySpend)}</div>
+      <div class="sub">${new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</div></div>`);
+  } else {
+    tiles.push(`<div class="kpi"><div class="lbl">Peak ${V.byMonth ? "month" : "day"}</div>
+      <div class="val">${fmtMoney(V.peak)}</div>
+      <div class="sub">highest single ${V.byMonth ? "month" : "day"}</div></div>`);
+  }
+
+  tiles.push(`<div class="kpi"><div class="lbl">Daily average</div><div class="val">${fmtMoney(V.avg)}</div>
+      <div class="sub">over ${V.elapsed} day${V.elapsed===1?"":"s"}</div></div>`);
+
+  /* With a single category picked, "top category" restates the filter — show the
+     dominant payment mode instead, which is the question you'd actually ask next. */
+  if (flt.cats.length === 1) {
+    tiles.push(`<div class="kpi"><div class="lbl">Top payment mode</div>
+      <div class="val" style="font-size:17px">${V.topMode ? esc(V.topMode[0]) : "—"}</div>
+      <div class="sub">${V.topMode ? fmtMoney(V.topMode[1]) : "no entries in range"}</div></div>`);
+  } else {
+    tiles.push(`<div class="kpi"><div class="lbl">Top category</div>
+      <div class="val" style="font-size:17px">${V.topCat ? esc(V.topCat[0]) : "—"}</div>
+      <div class="sub">${V.topCat ? fmtMoney(V.topCat[1]) : "no entries in range"}</div></div>`);
+  }
+
+  const avgEntry = V.list.length ? V.total / V.list.length : 0;
+  tiles.push(`<div class="kpi"><div class="lbl">Entries</div><div class="val">${V.list.length}</div>
+      <div class="sub">${V.list.length ? fmtMoney(avgEntry) + " avg each" : "none in range"}</div></div>`);
+  $("kpis").innerHTML = tiles.join("");
+}
+
+/* ---------- charts ---------- */
+function chartInk() {
+  return { ink: cssVar("--ink"), ink2: cssVar("--ink-2"), muted: cssVar("--muted"),
+           grid: cssVar("--hairline"), base: cssVar("--baseline"), surface: cssVar("--surface") };
+}
+function tooltipStyle(c) {
+  return { backgroundColor: cssVar("--surface-2"), titleColor: c.ink, bodyColor: c.ink2,
+           borderColor: cssVar("--border"), borderWidth: 1, padding: 10, cornerRadius: 8,
+           titleFont: {weight:"600"}, displayColors: true, boxWidth: 8, boxHeight: 8, usePointStyle: true };
+}
+function destroyCharts() { Object.values(charts).forEach(ch => ch && ch.destroy()); charts = {}; }
+
+function bucketLabel(key, byMonth, span) {
+  if (byMonth) {
+    const [y,m] = key.split("-").map(Number);
+    return new Date(y,m-1,1).toLocaleDateString("en-GB", { month:"short", year:"2-digit" });
+  }
+  if (span > 31) return fmtDay(key);            // range crosses months, so name them
+  return String(parseInt(key.slice(8),10));
+}
+
+function renderCharts(V) {
+  destroyCharts();
+  const c = chartInk();
+  Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  Chart.defaults.font.size = 11.5;
+  const has = V.total > 0;
+  $("dailyEmpty").style.display = has ? "none" : "flex";
+  $("modeEmpty").style.display = has ? "none" : "flex";
+  $("dailyTitle").textContent = V.byMonth ? "Spend by month" : "Daily spend";
+  $("dailySub").textContent = rangeLabel() + (V.byMonth ? " · month by month" : " · day by day");
+
+  /* Spend over time — single series, adaptive buckets */
+  if (has) {
+    charts.daily = new Chart($("dailyChart"), {
+      type: "bar",
+      data: { labels: V.keys.map(k => bucketLabel(k, V.byMonth, V.span)),
+        datasets: [{ data: V.values, backgroundColor: cssVar("--s1"),
+          borderRadius: 4, borderSkipped: "bottom", maxBarThickness: 24, categoryPercentage: .78, barPercentage: .92 }] },
+      options: { responsive:true, maintainAspectRatio:false,
+        plugins: { legend:{display:false},
+          tooltip: { ...tooltipStyle(c), displayColors:false,
+            callbacks: {
+              title: it => V.byMonth ? monthLabelOf(V.keys[it[0].dataIndex]) : fmtDay(V.keys[it[0].dataIndex], true),
+              label: it => fmtMoney(it.raw) } } },
+        scales: {
+          x: { grid:{display:false}, border:{color:c.base},
+               ticks:{color:c.muted, maxRotation:0, autoSkip:true, maxTicksLimit: 16} },
+          y: { beginAtZero:true, grid:{color:c.grid}, border:{display:false},
+               ticks:{color:c.muted, maxTicksLimit:5, callback:v=>fmtMoney(v,{compact:true})} }
+        } }
+    });
+  }
+
+  /* Category doughnut — clicking a slice toggles that category filter.
+     A single selected category would render one full ring, which says nothing,
+     so that case shows a note instead. */
+  const catNames = Object.keys(V.byCat);
+  const catUseful = has && !(flt.cats.length === 1) && catNames.length > 1;
+  $("catEmpty").style.display = catUseful ? "none" : "flex";
+  $("catEmpty").textContent = !has ? "No entries in this range"
+    : flt.cats.length === 1 ? `Filtered to ${flt.cats[0]} — clear it to compare categories`
+    : catNames.length <= 1 ? "Only one category in this range"
+    : "";
+  if (catUseful) {
+    const segs = [];
+    let other = 0;
+    state.categories.slice().sort((a,b)=>(a.slot??99)-(b.slot??99)).forEach(cat => {
+      const amt = V.byCat[cat.name] || 0;
+      if (amt <= 0) return;
+      if (cat.slot != null && cat.slot < 8) segs.push({ name:cat.name, amt, color: cssVar("--s"+(cat.slot+1)) });
+      else other += amt;
+    });
+    let otherNames = [];
+    catNames.forEach(name => {
+      const known = state.categories.find(cc => cc.name === name);
+      if (!known || known.slot == null || known.slot >= 8) otherNames.push(name);
+    });
+    catNames.forEach(name => {                       // categories removed from the list
+      if (!state.categories.some(cc => cc.name === name)) other += V.byCat[name];
+    });
+    if (other > 0) segs.push({ name:"Other", amt: other, color: OTHER_GRAY, group: otherNames });
+    charts.cat = new Chart($("catChart"), {
+      type: "doughnut",
+      data: { labels: segs.map(s=>s.name),
+        datasets: [{ data: segs.map(s=>s.amt), backgroundColor: segs.map(s=>s.color),
+          borderColor: c.surface, borderWidth: 2, hoverOffset: 5 }] },
+      options: { responsive:true, maintainAspectRatio:false, cutout: "66%",
+        onClick: (ev, els) => {
+          if (!els.length) return;
+          const seg = segs[els[0].index];
+          if (seg.name === "Other") { toggleCats(seg.group || []); return; }
+          toggleCats([seg.name]);
+        },
+        onHover: (ev, els) => { ev.native.target.style.cursor = els.length ? "pointer" : "default"; },
+        plugins: {
+          legend: { position:"bottom",
+            labels:{ color:c.ink2, usePointStyle:true, pointStyle:"circle", boxWidth:7, boxHeight:7, padding:10 },
+            onClick: (e, item) => {
+              const seg = segs[item.index];
+              if (seg.name === "Other") { toggleCats(seg.group || []); return; }
+              toggleCats([seg.name]);
+            } },
+          tooltip: { ...tooltipStyle(c),
+            callbacks: { label: it => " " + fmtMoney(it.raw) + "  ·  " + (it.raw/V.total*100).toFixed(1) + "%",
+                         footer: () => "click to filter" } }
+        } }
+    });
+  }
+
+  /* Payment-mode doughnut — clicking a slice toggles that mode */
+  if (has) {
+    const data = PAY_MODES.map(m => V.byMode[m] || 0);
+    charts.mode = new Chart($("modeChart"), {
+      type: "doughnut",
+      data: { labels: PAY_MODES,
+        datasets: [{ data, backgroundColor: [cssVar("--s1"), cssVar("--s2"), cssVar("--s3"), cssVar("--s4")],
+          borderColor: c.surface, borderWidth: 2, hoverOffset: 5 }] },
+      options: { responsive:true, maintainAspectRatio:false, cutout: "66%",
+        onClick: (ev, els) => { if (els.length) toggleMode(PAY_MODES[els[0].index]); },
+        onHover: (ev, els) => { ev.native.target.style.cursor = els.length ? "pointer" : "default"; },
+        plugins: {
+          legend: { position:"bottom",
+            labels:{ color:c.ink2, usePointStyle:true, pointStyle:"circle", boxWidth:7, boxHeight:7, padding:10 },
+            onClick: (e, item) => toggleMode(PAY_MODES[item.index]) },
+          tooltip: { ...tooltipStyle(c),
+            callbacks: { label: it => " " + fmtMoney(it.raw) + (V.total ? "  ·  " + (it.raw/V.total*100).toFixed(1) + "%" : ""),
+                         footer: () => "click to filter" } }
+        } }
+    });
+  }
+
+  /* Trailing 12 months — keeps the non-date filters so you can see a category's
+     trajectory beyond the selected window; months inside the range are brighter. */
+  const anchor = V.to.slice(0,7);
+  const months = [];
+  for (let i = 11; i >= 0; i--) months.push(shiftMonth(anchor, -i));
+  const inRange = new Set((wholeMonths() || []));
+  const [rf,rt] = rawBounds();
+  const totals = months.map(mk => activeEntries()
+    .filter(e => e.date.startsWith(mk) && passesRest(e))
+    .reduce((s,e)=>s+e.amount, 0));
+  const anyTrend = totals.some(t => t > 0);
+  $("trendEmpty").style.display = anyTrend ? "none" : "flex";
+  $("trendSub").textContent = narrowsSpend() ? "Filters applied · ignores the date range"
+                                             : "Last 12 months · ignores the date range";
+  if (anyTrend) {
+    charts.trend = new Chart($("trendChart"), {
+      type: "bar",
+      data: { labels: months.map(mk => { const [y,m]=mk.split("-").map(Number);
+                return new Date(y,m-1,1).toLocaleDateString("en-GB",{month:"short"}); }),
+        datasets: [{ data: totals,
+          backgroundColor: months.map(mk => {
+            const hot = inRange.size ? inRange.has(mk) : (monthStart(mk) <= rt && monthEnd(mk) >= rf);
+            return hot ? cssVar("--s1") : cssVar("--s1") + "66";
+          }),
+          borderRadius: 4, borderSkipped: "bottom", maxBarThickness: 24, categoryPercentage: .7 }] },
+      options: { responsive:true, maintainAspectRatio:false,
+        onClick: (ev, els) => { if (els.length) jumpToMonth(months[els[0].index]); },
+        onHover: (ev, els) => { ev.native.target.style.cursor = els.length ? "pointer" : "default"; },
+        plugins: { legend:{display:false},
+          tooltip: { ...tooltipStyle(c), displayColors:false,
+            callbacks: { title: it => monthLabelOf(months[it[0].dataIndex]),
+                         label: it => fmtMoney(it.raw),
+                         footer: () => "click to view this month" } } },
+        scales: {
+          x: { grid:{display:false}, border:{color:c.base}, ticks:{color:c.muted, maxRotation:0, autoSkip:true, maxTicksLimit:12} },
+          y: { beginAtZero:true, grid:{color:c.grid}, border:{display:false},
+               ticks:{color:c.muted, maxTicksLimit:5, callback:v=>fmtMoney(v,{compact:true})} }
+        } }
+    });
+  }
+}
+
+/* ---------- entries list ---------- */
+function renderList(V) {
+  const all = activeEntries().length;
+  $("entryCount").textContent = V.list.length + (anyFilterActive() ? ` of ${all} matching` : ` entr${all===1?"y":"ies"}`);
+  if (!V.list.length) {
+    $("entryList").innerHTML = `<div class="list-empty">${
+      anyFilterActive() ? "Nothing matches these filters — try widening the range or clearing a filter."
+                        : "No expenses recorded for " + esc(rangeLabel()) + " — add the first one above."
+    }</div>`;
+    return;
+  }
+  const byDay = {};
+  V.list.forEach(e => { (byDay[e.date] = byDay[e.date] || []).push(e); });
+  const days = Object.keys(byDay).sort().reverse();
+  const multiMonth = new Set(days.map(d => d.slice(0,7))).size > 1;
+  let html = "", lastMonth = "";
+  days.forEach(d => {
+    if (multiMonth && d.slice(0,7) !== lastMonth) {
+      lastMonth = d.slice(0,7);
+      const mTotal = V.list.filter(e => e.date.startsWith(lastMonth)).reduce((s,e)=>s+e.amount,0);
+      html += `<div class="month-sep"><span>${esc(monthLabelOf(lastMonth))}</span><b>${fmtMoney(mTotal)}</b></div>`;
+    }
+    const rows = byDay[d].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+    const sum = rows.reduce((s,e)=>s+e.amount,0);
+    const [y,m,dd] = d.split("-").map(Number);
+    const label = new Date(y,m-1,dd).toLocaleDateString("en-GB",{weekday:"short", day:"numeric", month:"short"});
+    html += `<div class="day-group"><div class="day-head"><span>${label}${d===todayStr() ? " · today" : ""}</span><b>${fmtMoney(sum)}</b></div>`;
+    rows.forEach(e => {
+      html += `<div class="entry-row">
+        <span class="swatch" style="background:${catColor(e.cat)}"></span>
+        <div class="entry-main"><div class="entry-cat">${esc(e.cat)}</div>${e.note ? `<div class="entry-note">${esc(e.note)}</div>` : ""}</div>
+        <span class="mode-tag">${esc(e.mode)}</span>
+        <span class="entry-amt">${fmtMoney(e.amount)}</span>
+        <button class="rowbtn" title="Edit" onclick="startEdit('${e.id}')">✎</button>
+        <button class="rowbtn del" title="Delete" onclick="deleteEntry('${e.id}')">🗑</button>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  $("entryList").innerHTML = html;
+}
+
+/* ---------------------------------------------------------------------
+   Filter bar
+--------------------------------------------------------------------- */
+/* Per-category totals with every filter EXCEPT the category one, so the chips
+   show what you'd get by selecting them rather than what's already selected. */
+function chipTotals() {
+  const t = {};
+  activeEntries().forEach(e => {
+    if (!passesDate(e)) return;
+    if (flt.modes.length && !flt.modes.includes(e.mode)) return;
+    if (flt.min != null && e.amount < flt.min) return;
+    if (flt.max != null && e.amount > flt.max) return;
+    if (flt.q) {
+      const q = flt.q.toLowerCase();
+      if (!(e.note||"").toLowerCase().includes(q) && !e.cat.toLowerCase().includes(q)) return;
+    }
+    t[e.cat] = (t[e.cat]||0) + e.amount;
+  });
+  return t;
+}
+
+let openDD = null;                                  // id of the open dropdown, kept across re-renders
+const DD_IDS = ["ddPeriod","ddCat","ddAmt","ddMode"];
+const numOrNull = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
+let fbDebounce = null;
+function fbChanged() { clearTimeout(fbDebounce); fbDebounce = setTimeout(renderAll, 220); }
+
+function amountLabel() {
+  if (flt.min != null && flt.max != null) return fmtMoney(flt.min,{compact:true}) + "–" + fmtMoney(flt.max,{compact:true});
+  if (flt.min != null) return "≥ " + fmtMoney(flt.min,{compact:true});
+  if (flt.max != null) return "≤ " + fmtMoney(flt.max,{compact:true});
+  return "Any";
+}
+/* Rebuilding a panel that holds the caret would kill mid-typing focus. */
+function setPanel(id, html) {
+  const el = $(id);
+  if (el.contains(document.activeElement)) return false;
+  el.innerHTML = html;
+  return true;
+}
+
+function renderFilterBar(V) {
+  /* --- button labels + active styling --- */
+  $("vPeriod").textContent = flt.range === "custom" ? "Custom" : RANGE_PRESETS.find(p=>p.id===flt.range).label;
+  $("vCat").textContent = !flt.cats.length ? "All" : flt.cats.length === 1 ? flt.cats[0] : flt.cats.length + " selected";
+  $("vAmt").textContent = amountLabel();
+  $("vMode").textContent = !flt.modes.length ? "All" : flt.modes.length === 1 ? flt.modes[0] : flt.modes.length + " selected";
+  $("ddPeriod").classList.toggle("on", flt.range !== "month");
+  $("ddCat").classList.toggle("on", flt.cats.length > 0);
+  $("ddAmt").classList.toggle("on", flt.min != null || flt.max != null);
+  $("ddMode").classList.toggle("on", flt.modes.length > 0);
+
+  /* --- Period panel --- */
+  if (setPanel("panelPeriod",
+    `<div class="dd-head"><span>Period</span></div>
+     <div class="dd-list">${RANGE_PRESETS.filter(p=>p.id!=="custom").map(p =>
+       `<button class="dd-opt${flt.range===p.id?" sel":""}" data-range="${p.id}">
+          <span class="tick">${flt.range===p.id?"✓":""}</span><span class="nm">${p.label}</span></button>`).join("")}
+     </div>
+     <div class="dd-sep"></div>
+     <div class="dd-note">Custom range — spans any months</div>
+     <div class="dd-fields">
+       <input type="date" id="fbFrom" aria-label="From date">
+       <span class="fb-dash">→</span>
+       <input type="date" id="fbTo" aria-label="To date">
+     </div>`)) {
+    $("panelPeriod").querySelectorAll("[data-range]").forEach(b => b.onclick = () => setRange(b.dataset.range));
+    $("fbFrom").value = flt.from; $("fbTo").value = flt.to;
+    $("fbFrom").onchange = e => { flt.from = e.target.value; flt.range = "custom"; renderAll(); };
+    $("fbTo").onchange   = e => { flt.to   = e.target.value; flt.range = "custom"; renderAll(); };
+  }
+
+  /* --- Category panel: amounts show what selecting each would yield --- */
+  const totals = chipTotals();
+  const names = state.categories.map(c=>c.name);
+  Object.keys(totals).forEach(n => { if (!names.includes(n)) names.push(n); });   // categories only present in old data
+  if (setPanel("panelCat",
+    `<div class="dd-head"><span>Categories</span>${flt.cats.length?`<button data-catclear>Clear</button>`:""}</div>
+     <div class="dd-list">${names.map(n => {
+        const amt = totals[n] || 0;
+        return `<button class="dd-opt${flt.cats.includes(n)?" sel":""}${amt?"":" dim"}" data-cat="${esc(n)}">
+          <span class="tick">${flt.cats.includes(n)?"✓":""}</span>
+          <span class="dot" style="background:${catColor(n)}"></span>
+          <span class="nm">${esc(n)}</span>
+          <span class="amt">${amt?fmtMoney(amt,{compact:true}):"—"}</span></button>`;
+      }).join("")}</div>`)) {
+    $("panelCat").querySelectorAll("[data-cat]").forEach(b => b.onclick = () => toggleCats([b.dataset.cat]));
+    const cc = $("panelCat").querySelector("[data-catclear]");
+    if (cc) cc.onclick = () => { flt.cats = []; renderAll(); };
+  }
+
+  /* --- Amount panel --- */
+  if (setPanel("panelAmt",
+    `<div class="dd-head"><span>Amount range</span>${(flt.min!=null||flt.max!=null)?`<button data-amtclear>Clear</button>`:""}</div>
+     <div class="dd-fields">
+       <input type="number" id="fbMin" placeholder="Min" min="0" inputmode="decimal">
+       <span class="fb-dash">–</span>
+       <input type="number" id="fbMax" placeholder="Max" min="0" inputmode="decimal">
+     </div>
+     <div class="dd-sep"></div>
+     <div class="dd-list">
+       <button class="dd-opt" data-amt="0,500"><span class="tick"></span><span class="nm">Under 500</span></button>
+       <button class="dd-opt" data-amt="500,2000"><span class="tick"></span><span class="nm">500 – 2,000</span></button>
+       <button class="dd-opt" data-amt="2000,10000"><span class="tick"></span><span class="nm">2,000 – 10,000</span></button>
+       <button class="dd-opt" data-amt="10000,"><span class="tick"></span><span class="nm">Over 10,000</span></button>
+     </div>`)) {
+    $("fbMin").value = flt.min == null ? "" : flt.min;
+    $("fbMax").value = flt.max == null ? "" : flt.max;
+    $("fbMin").oninput = e => { flt.min = numOrNull(e.target.value); fbChanged(); };
+    $("fbMax").oninput = e => { flt.max = numOrNull(e.target.value); fbChanged(); };
+    $("panelAmt").querySelectorAll("[data-amt]").forEach(b => b.onclick = () => {
+      const [lo,hi] = b.dataset.amt.split(",");
+      flt.min = lo === "" ? null : Number(lo);
+      flt.max = hi === "" ? null : Number(hi);
+      renderAll();
+    });
+    const ac = $("panelAmt").querySelector("[data-amtclear]");
+    if (ac) ac.onclick = () => { flt.min = null; flt.max = null; renderAll(); };
+  }
+
+  /* --- Mode panel --- */
+  if (setPanel("panelMode",
+    `<div class="dd-head"><span>Payment mode</span>${flt.modes.length?`<button data-modeclear>Clear</button>`:""}</div>
+     <div class="dd-list">${PAY_MODES.map(m =>
+       `<button class="dd-opt${flt.modes.includes(m)?" sel":""}" data-mode="${esc(m)}">
+          <span class="tick">${flt.modes.includes(m)?"✓":""}</span><span class="nm">${esc(m)}</span>
+          <span class="amt">${V.byMode[m]?fmtMoney(V.byMode[m],{compact:true}):"—"}</span></button>`).join("")}
+     </div>`)) {
+    $("panelMode").querySelectorAll("[data-mode]").forEach(b => b.onclick = () => toggleMode(b.dataset.mode));
+    const mc = $("panelMode").querySelector("[data-modeclear]");
+    if (mc) mc.onclick = () => { flt.modes = []; renderAll(); };
+  }
+
+  if (document.activeElement !== $("fbSearch")) $("fbSearch").value = flt.q;
+  const active = anyFilterActive();
+  $("fbClear").style.display = active ? "" : "none";
+  $("fbCount").textContent = active
+    ? `${V.list.length} ${V.list.length===1?"entry":"entries"} · ${fmtMoney(V.total)}`
+    : "";
+  /* keep whichever dropdown the user had open */
+  DD_IDS.forEach(id => $(id).classList.toggle("open", openDD === id));
+}
+
+function toggleDD(id) {
+  openDD = openDD === id ? null : id;
+  DD_IDS.forEach(x => $(x).classList.toggle("open", openDD === x));
+}
+DD_IDS.forEach(id => {
+  $(id).querySelector(".dd-btn").onclick = ev => { ev.stopPropagation(); toggleDD(id); };
+});
+document.addEventListener("mousedown", ev => {
+  if (openDD && !$(openDD).contains(ev.target)) { openDD = null;
+    DD_IDS.forEach(x => $(x).classList.remove("open")); }
+});
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape" && openDD) { openDD = null;
+    DD_IDS.forEach(x => $(x).classList.remove("open")); }
+});
+
+function setRange(id) {
+  flt.range = id;
+  if (id === "custom" && !flt.from && !flt.to) {
+    flt.from = monthStart(viewMonth);
+    flt.to = monthEnd(viewMonth);
+  }
+  renderAll();
+}
+function toggleCats(list) {
+  list.forEach(n => {
+    const i = flt.cats.indexOf(n);
+    if (i >= 0) flt.cats.splice(i,1); else flt.cats.push(n);
+  });
+  renderAll();
+}
+function toggleMode(m) {
+  const i = flt.modes.indexOf(m);
+  if (i >= 0) flt.modes.splice(i,1); else flt.modes.push(m);
+  renderAll();
+}
+function clearFilters() {
+  flt = { range:"month", from:"", to:"", cats:[], modes:[], min:null, max:null, q:"" };
+  renderAll();
+  toast("Filters cleared");
+}
+function jumpToMonth(mk) {
+  viewMonth = mk;
+  flt.range = "month";
+  renderAll();
+}
+
+/* ---------- category UI ---------- */
+function renderCatSelects() {
+  const cats = state.categories.map(c=>c.name);
+  const sel = $("fCat");
+  const cur = sel.value;
+  sel.innerHTML = cats.map(n=>`<option>${esc(n)}</option>`).join("");
+  if (cur && cats.includes(cur)) sel.value = cur;
+}
+function renderCatManager() {
+  $("catManager").innerHTML = state.categories.map((c,i) =>
+    `<span class="cat-chip"><span class="swatch" style="background:${c.slot!=null&&c.slot<8?cssVar("--s"+(c.slot+1)):OTHER_GRAY}"></span>
+     ${esc(c.name)}<button title="Remove" onclick="removeCat(${i})">✕</button></span>`).join("");
+}
+window.removeCat = function(i) {
+  const c = state.categories[i];
+  if (!c) return;
+  if (!confirm(`Remove category “${c.name}”? Existing entries keep it.`)) return;
+  state.categories.splice(i,1);
+  state.meta.categories = now();
+  commit();
+};
+$("addCatBtn").onclick = () => {
+  const name = $("newCatName").value.trim();
+  if (!name) return;
+  if (state.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) { toast("That category already exists"); return; }
+  const used = new Set(state.categories.map(c=>c.slot).filter(s=>s!=null));
+  let slot = null;
+  for (let s=0; s<8; s++) if (!used.has(s)) { slot = s; break; }
+  state.categories.push({ name, slot });
+  state.meta.categories = now();
+  $("newCatName").value = "";
+  commit();
+  toast(`Added “${name}”`);
+};
+
+/* =====================================================================
+   ENTRY CRUD
+===================================================================== */
+$("entryForm").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const amount = parseFloat($("fAmount").value);
+  if (!(amount > 0)) { toast("Enter an amount above zero"); return; }
+  const date = $("fDate").value;
+  if (!date) { toast("Pick a date"); return; }
+  const entry = {
+    id: editingId || uid(),
+    date, amount: Math.round(amount*100)/100,
+    cat: $("fCat").value, mode: $("fMode").value,
+    note: $("fNote").value.trim(), updatedAt: now()
+  };
+  state.entries[entry.id] = entry;
+  const wasEdit = !!editingId;
+  stopEdit();
+  viewMonth = date.slice(0,7);
+  commit();
+  toast(wasEdit ? "Entry updated" : fmtMoney(entry.amount) + " recorded");
+});
+window.startEdit = function(id) {
+  const e = state.entries[id];
+  if (!e || e.deleted) return;
+  editingId = id;
+  $("fAmount").value = e.amount;
+  $("fDate").value = e.date;
+  renderCatSelects();
+  if (![...$("fCat").options].some(o=>o.value===e.cat)) {
+    const o = document.createElement("option"); o.textContent = e.cat; $("fCat").appendChild(o);
+  }
+  $("fCat").value = e.cat;
+  $("fMode").value = e.mode;
+  $("fNote").value = e.note || "";
+  $("formTitle").textContent = "Edit expense";
+  $("saveBtn").textContent = "Save changes";
+  $("cancelEdit").style.display = "";
+  $("entryForm").scrollIntoView({ behavior:"smooth", block:"center" });
+  $("fAmount").focus();
+};
+function stopEdit() {
+  editingId = null;
+  $("entryForm").reset();
+  $("fDate").value = todayStr();
+  $("formTitle").textContent = "Record an expense";
+  $("saveBtn").textContent = "Add expense";
+  $("cancelEdit").style.display = "none";
+}
+$("cancelEdit").onclick = stopEdit;
+window.deleteEntry = function(id) {
+  const e = state.entries[id];
+  if (!e) return;
+  if (!confirm(`Delete ${fmtMoney(e.amount)} — ${e.cat}?`)) return;
+  state.entries[id] = { id, deleted: true, updatedAt: now() };
+  if (editingId === id) stopEdit();
+  commit();
+  toast("Entry deleted");
+};
+
+/* =====================================================================
+   NAVIGATION, BUDGET, SETTINGS
+===================================================================== */
+$("prevMonth").onclick = () => { viewMonth = shiftMonth(viewMonth,-1); renderAll(); };
+$("nextMonth").onclick = () => { viewMonth = shiftMonth(viewMonth, 1); renderAll(); };
+$("jumpToday").onclick = () => { viewMonth = monthKey(new Date()); flt.range = "month"; renderAll(); };
+
+function openModal(id) { $(id).classList.add("open"); }
+function closeModal(id) { $(id).classList.remove("open"); }
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeModal(b.dataset.close));
+document.querySelectorAll(".modal-overlay").forEach(ov => ov.addEventListener("mousedown", ev => {
+  if (ev.target === ov) ov.classList.remove("open");
+}));
+
+/* Budgets are per calendar month, so this only targets a single-month view. */
+function budgetMonth() { return isSingleMonth() || viewMonth; }
+window.openBudget = function() {
+  const mk = budgetMonth();
+  $("budgetModalTitle").textContent = "Budget · " + monthLabelOf(mk);
+  const b = state.budgets[mk];
+  $("budgetInput").value = b && b.amount > 0 ? b.amount : "";
+  openModal("budgetModal");
+  setTimeout(()=>$("budgetInput").focus(), 60);
+};
+$("budgetPill").onclick = openBudget;
+$("budgetSave").onclick = () => {
+  const v = parseFloat($("budgetInput").value);
+  if (!(v > 0)) { toast("Enter a budget above zero"); return; }
+  const mk = budgetMonth();
+  state.budgets[mk] = { amount: Math.round(v), updatedAt: now() };
+  closeModal("budgetModal");
+  commit();
+  toast("Budget set for " + monthLabelOf(mk));
+};
+$("budgetRemove").onclick = () => {
+  const mk = budgetMonth();
+  state.budgets[mk] = { amount: null, updatedAt: now() };
+  closeModal("budgetModal");
+  commit();
+  toast("Budget removed for " + monthLabelOf(mk));
+};
+$("budgetInput").addEventListener("keydown", e => { if (e.key === "Enter") $("budgetSave").click(); });
+
+$("settingsBtn").onclick = () => openModal("settingsModal");
+$("syncChip").onclick = () => { renderSyncModal(); openModal("authModal"); };
+
+/* theme */
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem(LS_THEME, t);
+  $("setTheme").value = t;
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", t==="dark" ? "#0a0806" : "#f9f9f7");
+  renderAll();
+}
+$("themeBtn").onclick = () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+$("setTheme").onchange = e => applyTheme(e.target.value);
+
+/* currency */
+$("setCurrency").onchange = e => {
+  state.settings.currency = e.target.value;
+  state.meta.settings = now();
+  commit();
+  toast("Currency set to " + e.target.value);
+};
+
+/* filter inputs — the amount and date fields live inside dropdown panels and are
+   wired as those panels are built; only these two controls are always present. */
+$("fbSearch").addEventListener("input", e => { flt.q = e.target.value.trim(); fbChanged(); });
+$("fbClear").onclick = clearFilters;
+
+/* backup */
+$("exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify({ app:"aurum-ledger", version:1, exportedAt:new Date().toISOString(), state }, null, 2)],
+    { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "aurum-ledger-backup-" + todayStr() + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("Backup exported");
+};
+$("importBtn").onclick = () => $("importFile").click();
+$("importFile").onchange = ev => {
+  const f = ev.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const data = JSON.parse(r.result);
+      const incoming = data.state && data.state.entries ? data.state : (data.entries ? data : null);
+      if (!incoming) throw new Error("bad format");
+      state = mergeStates(state, incoming);
+      commit();
+      toast("Backup merged — " + activeEntries().length + " entries total");
+    } catch { toast("Couldn't read that file — is it an Aurum Ledger backup?"); }
+    ev.target.value = "";
+  };
+  r.readAsText(f);
+};
+$("wipeBtn").onclick = () => {
+  if (!confirm("Erase ALL entries and budgets from Aurum Ledger?")) return;
+  if (!confirm("This syncs to your other devices and cannot be undone. Really erase everything?")) return;
+  /* Tombstone rather than drop: a merge keeps any entry the other side still has,
+     so a wipe only propagates if each id is explicitly marked deleted. */
+  const t = now();
+  const cleared = {};
+  Object.keys(state.entries).forEach(id => { cleared[id] = { id, deleted: true, updatedAt: t }; });
+  state.entries = cleared;
+  Object.keys(state.budgets).forEach(mk => { state.budgets[mk] = { amount: null, updatedAt: t }; });
+  stopEdit();
+  commit();
+  toast("All entries erased");
+};
+
+/* =====================================================================
+   PASSCODE LOCK
+   The passcode unwraps the master key that decrypts the ledger. A wrong
+   passcode cannot decrypt anything, so there is nothing to "bypass" — the
+   screen and the encryption are the same mechanism.
+===================================================================== */
+const PIN_LEN = 6;
+const MAX_TRIES = 5;
+const LOCKOUT_MS = 30000;
+
+let pinMode = "verify";      // verify | create | confirm | recovery | showrec
+let pinFirst = "";
+let pinBusy = false;
+let pendingRecovery = null;  // recovery key awaiting acknowledgement
+let pinMode2Change = false;  // true when creating a replacement passcode, not a new ledger
+
+/* --- lockout state (survives reload within the browser session) --- */
+function tries() { return parseInt(sessionStorage.getItem("aurum-tries") || "0", 10); }
+function setTries(n) { sessionStorage.setItem("aurum-tries", String(n)); }
+function lockedUntil() { return parseInt(sessionStorage.getItem("aurum-lockout") || "0", 10); }
+
+function drawDots() {
+  const n = $("pinInput").value.length;
+  $("pinDots").innerHTML = Array.from({length: PIN_LEN}, (_, i) =>
+    `<div class="pin-dot${i < n ? " filled" : ""}${i === n ? " next" : ""}">${i < n ? "•" : ""}</div>`).join("");
+}
+function pinPrompt(sub, err, hint) {
+  $("lockSub").innerHTML = sub;
+  $("lockErr").textContent = err || "";
+  $("lockHint").innerHTML = hint || "";
+  $("pinWrap").style.display = "";
+  $("recWrap").style.display = "none";
+  $("pinInput").value = "";
+  drawDots();
+  setTimeout(() => $("pinInput").focus(), 50);
+}
+function busyPrompt(msg) {
+  $("lockSub").textContent = msg;
+  $("lockErr").textContent = "";
+  $("lockHint").innerHTML = "";
+  $("pinWrap").style.display = "none";
+  $("recWrap").style.display = "none";
+}
+function shake() {
+  const w = $("pinWrap");
+  w.classList.remove("shake"); void w.offsetWidth; w.classList.add("shake");
+}
+
+function beginCreate(isChange) {
+  pinMode = "create"; pinFirst = ""; pinMode2Change = !!isChange;
+  pinPrompt(isChange ? `Choose a <b>new ${PIN_LEN}-digit passcode</b>.`
+                     : `Welcome. Set a <b>${PIN_LEN}-digit passcode</b>. It encrypts your ledger.`,
+            "", isChange ? `<a id="cancelChange">Cancel</a>`
+                         : "Your entries are encrypted with this code before they leave the device.");
+  const cc = $("cancelChange");
+  if (cc) cc.onclick = () => { if (mkKey) unlockApp(); };
+}
+
+function beginVerify(err) {
+  pinMode = "verify";
+  const wait = lockedUntil() - Date.now();
+  if (wait > 0) { startLockout(wait); return; }
+  pinPrompt(`Enter your ${PIN_LEN}-digit passcode to continue.`, err || "",
+            `<a id="forgotPin">Forgot passcode?</a>`);
+  $("forgotPin").onclick = beginRecovery;
+}
+function beginRecovery() {
+  pinMode = "recovery";
+  $("lockSub").innerHTML = "Enter your <b>recovery key</b> to unlock and set a new passcode.";
+  $("lockErr").textContent = "";
+  $("lockHint").innerHTML = `<a id="backToPin">Back to passcode</a>`;
+  $("pinWrap").style.display = "none";
+  $("recWrap").style.display = "";
+  $("recInput").value = "";
+  $("backToPin").onclick = beginVerify;
+  setTimeout(() => $("recInput").focus(), 50);
+}
+function startLockout(ms) {
+  $("pinWrap").style.display = "none";
+  $("recWrap").style.display = "none";
+  $("lockHint").innerHTML = "";
+  const tick = () => {
+    const left = Math.ceil((lockedUntil() - Date.now()) / 1000);
+    if (left <= 0) { setTries(0); beginVerify(); return; }
+    $("lockSub").textContent = "Too many incorrect attempts.";
+    $("lockErr").textContent = `Try again in ${left}s`;
+    setTimeout(tick, 400);
+  };
+  sessionStorage.setItem("aurum-lockout", String(Date.now() + ms));
+  tick();
+}
+
+/* Show the recovery key once, and refuse to move on until it's acknowledged —
+   with real encryption it is the only way back in after a forgotten passcode. */
+function showRecoveryKey(key, thenUnlock) {
+  pinMode = "showrec";
+  pendingRecovery = key;
+  $("pinWrap").style.display = "none";
+  $("recWrap").style.display = "none";
+  $("lockSub").innerHTML = `<b>Save your recovery key.</b> It is the only way into your
+    ledger if you forget the passcode — we cannot reset it for you.`;
+  $("lockErr").textContent = "";
+  $("lockHint").innerHTML = `<div class="reckey" id="recKeyBox">${esc(key)}</div>
+    <div class="recbtns">
+      <button class="btn btn-ghost" id="recCopy">Copy</button>
+      <button class="btn btn-ghost" id="recDownload">Download</button>
+    </div>
+    <label class="reccheck"><input type="checkbox" id="recAck"> I have saved this key somewhere safe</label>
+    <button class="btn btn-gold" id="recDone" style="width:100%;margin-top:10px" disabled>Continue</button>`;
+  $("recCopy").onclick = () => {
+    navigator.clipboard.writeText(key).then(()=>toast("Recovery key copied")).catch(()=>toast("Copy failed — write it down"));
+  };
+  $("recDownload").onclick = () => {
+    const blob = new Blob([
+      "AURUM LEDGER — RECOVERY KEY\n\n" + key +
+      "\n\nKeep this private. Anyone with this key can open your ledger.\n" +
+      "Without it, a forgotten passcode means the data cannot be recovered.\n"
+    ], { type:"text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "aurum-recovery-key.txt";
+    a.click(); URL.revokeObjectURL(a.href);
+  };
+  $("recAck").onchange = e => { $("recDone").disabled = !e.target.checked; };
+  $("recDone").onclick = () => { pendingRecovery = null; thenUnlock(); };
+}
+
+/* Build a brand-new encrypted ledger. */
+async function createLedger(pin) {
+  busyPrompt("Encrypting your ledger…");
+  mkRaw = randBytes(32);
+  mkKey = await importMK(mkRaw);
+  const rec = makeRecoveryKey();
+  envelope = {
+    v: ENV_V,
+    wrapPin: await wrapMK(pin, mkRaw, PIN_ITER),
+    wrapRecovery: await wrapMK(normalizeRecovery(rec), mkRaw, REC_ITER),
+    data: null, updatedAt: now()
+  };
+  await absorbLegacy();
+  await saveLocal();
+  showRecoveryKey(rec, () => { unlockApp(); pushRemote(); toast("Ledger encrypted"); });
+}
+/* Re-wrap the existing master key under a new passcode. Data is untouched, so
+   this is instant and cannot corrupt anything. */
+async function changePasscode(pin) {
+  busyPrompt("Updating passcode…");
+  envelope.wrapPin = await wrapMK(pin, mkRaw, PIN_ITER);
+  await saveLocal();
+  await pushRemote();
+  unlockApp();
+  toast("Passcode updated");
+}
+/* Pull in any pre-encryption plaintext left on this device, then remove it. */
+async function absorbLegacy() {
+  try {
+    const raw = localStorage.getItem(LS_LEGACY);
+    if (!raw) return;
+    const old = JSON.parse(raw);
+    if (old && old.entries && Object.keys(old.entries).length) {
+      state = mergeStates(state, adoptPayload(old));
+      toast("Imported " + activeEntries().length + " entries from this device");
+    }
+    localStorage.removeItem(LS_LEGACY);
+  } catch (e) { console.warn("legacy migration skipped", e); }
+}
+
+function currentEnvelope() {
+  /* Prefer whichever copy is newer; the cloud wins ties so a passcode changed
+     on another device takes effect here. */
+  const le = localEnvelope();
+  if (remoteEnvelope && le) return (remoteEnvelope.updatedAt||0) >= (le.updatedAt||0) ? remoteEnvelope : le;
+  return remoteEnvelope || le;
+}
+
+async function unlockWith(secret, wrapName, iterHint) {
+  const env = currentEnvelope();
+  const wrap = env && env[wrapName];
+  if (!wrap) throw new Error("no-wrap");
+  mkRaw = await unwrapMK(secret, wrap);          // throws on a wrong secret
+  mkKey = await importMK(mkRaw);
+  envelope = { v: ENV_V, wrapPin: env.wrapPin, wrapRecovery: env.wrapRecovery,
+               data: env.data, updatedAt: env.updatedAt || now() };
+  if (env.data) state = adoptPayload(await decryptPayload(env.data));
+  await absorbLegacy();
+  await saveLocal();
+}
+
+async function submitPin(pin) {
+  if (pinBusy) return;
+  if (pinMode === "verify" && lockedUntil() > Date.now()) { startLockout(lockedUntil() - Date.now()); return; }
+  pinBusy = true;
+  try {
+    if (pinMode === "create") {
+      pinFirst = pin; pinMode = "confirm";
+      pinPrompt("Enter it once more to confirm.", "", "");
+      return;
+    }
+    if (pinMode === "confirm") {
+      if (pin !== pinFirst) {
+        shake(); pinMode = "create"; pinFirst = "";
+        pinPrompt(`Choose a <b>${PIN_LEN}-digit passcode</b>.`, "Those didn't match — start again.", "");
+        return;
+      }
+      if (mkKey && pinMode2Change) await changePasscode(pin);
+      else await createLedger(pin);
+      return;
+    }
+    /* verify */
+    busyPrompt("Unlocking…");
+    try {
+      await unlockWith(pin, "wrapPin");
+    } catch (e) {
+      shake();
+      const t = tries() + 1;
+      setTries(t);
+      if (t >= MAX_TRIES) { startLockout(LOCKOUT_MS); return; }
+      beginVerify(`Incorrect passcode — ${MAX_TRIES - t} attempt${MAX_TRIES-t===1?"":"s"} left.`);
+      return;
+    }
+    setTries(0);
+    sessionStorage.removeItem("aurum-lockout");
+    unlockApp();
+    pushRemote();
+  } catch (e) {
+    console.error(e);
+    beginVerify("Something went wrong unlocking. Try again.");
+  } finally { pinBusy = false; }
+}
+
+async function submitRecovery() {
+  if (pinBusy) return;
+  const key = normalizeRecovery($("recInput").value);
+  if (key.length < 8) { $("lockErr").textContent = "Enter the full recovery key."; return; }
+  pinBusy = true;
+  busyPrompt("Checking recovery key…");
+  try {
+    await unlockWith(key, "wrapRecovery");
+    setTries(0); sessionStorage.removeItem("aurum-lockout");
+    pinMode2Change = true;                       // force a new passcode straight away
+    beginCreate(true);
+    $("lockErr").textContent = "";
+    $("lockSub").innerHTML = "Recovery accepted — <b>choose a new passcode</b>.";
+    toast("Recovered — set a new passcode");
+  } catch (e) {
+    console.error(e);
+    pinBusy = false;
+    beginRecovery();
+    $("lockErr").textContent = "That recovery key doesn't match.";
+    return;
+  }
+  pinBusy = false;
+}
+
+$("pinInput").addEventListener("input", () => {
+  const el = $("pinInput");
+  el.value = el.value.replace(/\D/g, "").slice(0, PIN_LEN);
+  drawDots();
+  $("lockErr").textContent = "";
+  if (el.value.length === PIN_LEN) {
+    const pin = el.value;
+    el.value = ""; drawDots();
+    submitPin(pin);
+  }
+});
+$("pinInput").addEventListener("focus", () => $("pinWrap").classList.add("focused"));
+$("pinInput").addEventListener("blur", () => $("pinWrap").classList.remove("focused"));
+$("pinDots").addEventListener("click", () => $("pinInput").focus());
+$("recGo").onclick = submitRecovery;
+$("recInput").addEventListener("keydown", e => { if (e.key === "Enter") submitRecovery(); });
+
+function unlockApp() {
+  appLocked = false;
+  pinMode2Change = false;
+  document.body.classList.remove("locked");
+  renderAll();
+}
+function lockApp() {
+  appLocked = true;
+  mkRaw = null; mkKey = null;                    // drop the key from memory
+  state = blankState();                          // and the plaintext with it
+  clearTimeout(syncTimer);
+  document.body.classList.add("locked");
+  closeModal("settingsModal"); closeModal("authModal"); closeModal("budgetModal");
+  destroyCharts();
+  stopEdit();                                    // don't leave a half-typed entry behind the lock
+  beginVerify();
+}
+$("lockBtn").onclick = lockApp;
+$("lockNowBtn").onclick = lockApp;
+$("changePinBtn").onclick = () => {
+  closeModal("settingsModal");
+  appLocked = true;
+  document.body.classList.add("locked");
+  beginCreate(true);
+};
+$("newRecBtn").onclick = async () => {
+  if (!mkKey) return;
+  if (!confirm("Generate a new recovery key? The old one stops working immediately.")) return;
+  const rec = makeRecoveryKey();
+  envelope.wrapRecovery = await wrapMK(normalizeRecovery(rec), mkRaw, REC_ITER);
+  await saveLocal();
+  await pushRemote();
+  closeModal("settingsModal");
+  appLocked = true;
+  document.body.classList.add("locked");
+  showRecoveryKey(rec, () => { unlockApp(); toast("New recovery key active"); });
+};
+
+/* Decide create-vs-verify only once we know whether a ledger already exists —
+   a fresh device has empty local storage and must not look like a first run. */
+async function lockBoot() {
+  if (!cryptoAvailable()) {
+    busyPrompt("Secure storage unavailable");
+    $("lockErr").innerHTML = "";
+    $("lockHint").innerHTML = `This page must be served over <b>https</b> (or localhost) so the
+      browser will encrypt your data. Opening the file directly from disk disables encryption,
+      so the ledger stays locked.`;
+    return;
+  }
+  busyPrompt("Checking your ledger…");
+  if (FIREBASE_CONFIG) {
+    await Promise.race([ firstSnapshotPromise, new Promise(r => setTimeout(r, 8000)) ]);
+  }
+  const env = currentEnvelope();
+  if (env && env.wrapPin) beginVerify();
+  else beginCreate(false);
+}
+
+/* =====================================================================
+   BOOT
+===================================================================== */
+applyTheme(localStorage.getItem(LS_THEME) || "dark");
+stopEdit();
+initFirebase();
+lockBoot();
+</script>
+</body>
+</html>
