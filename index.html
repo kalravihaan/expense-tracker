@@ -223,6 +223,8 @@ header {
   font-family: inherit; cursor: pointer; white-space: nowrap;
 }
 .fb-clear:hover { border-color: var(--crit); }
+.cur-note { flex-basis: 100%; font-size: 12px; color: var(--muted); padding: 2px 4px 0; }
+.cur-note a { color: var(--accent-text); cursor: pointer; text-decoration: underline; }
 .month-sep {
   display: flex; justify-content: space-between; align-items: baseline;
   margin: 16px 0 2px; padding-bottom: 6px;
@@ -451,6 +453,30 @@ body.locked #lockScreen { display: flex; }
 }
 .reccheck input { margin-top: 2px; accent-color: var(--accent); flex: none; }
 
+/* ---------- Erase flow ---------- */
+.steps { display: flex; gap: 6px; margin: 4px 0 16px; }
+.steps i {
+  height: 3px; flex: 1; border-radius: 2px; background: var(--hairline);
+  transition: background .25s;
+}
+.steps i.done { background: var(--crit); }
+.erase-warn { font-size: 14px; color: var(--ink-2); line-height: 1.55; margin-bottom: 12px; }
+.erase-warn b { color: var(--ink); }
+.erase-count {
+  border: 1px solid var(--hairline); border-radius: 11px;
+  background: var(--surface-2); padding: 12px 14px; margin: 12px 0;
+}
+.erase-count div { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--ink-2); padding: 3px 0; }
+.erase-count b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.erase-field {
+  width: 100%; background: var(--surface-2); color: var(--ink);
+  border: 1px solid var(--hairline); border-radius: 10px;
+  padding: 11px 12px; font-size: 15px; font-family: inherit; outline: none;
+  margin-top: 4px; text-align: center; letter-spacing: .1em;
+}
+.erase-field:focus { border-color: var(--crit); }
+.erase-step-note { font-size: 12px; color: var(--muted); margin-top: 9px; line-height: 1.5; }
+
 /* ---------- Toast ---------- */
 #toast {
   position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
@@ -562,9 +588,14 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 4
       <button class="dd-btn" data-dd="Mode"><span class="k">Mode</span><span class="v" id="vMode">All</span><span class="c">▼</span></button>
       <div class="dd-panel right" id="panelMode"></div>
     </div>
+    <div class="dd" id="ddCur" style="display:none">
+      <button class="dd-btn" data-dd="Currency"><span class="k">Currency</span><span class="v" id="vCur">INR</span><span class="c">▼</span></button>
+      <div class="dd-panel right" id="panelCur"></div>
+    </div>
     <input type="search" class="fb-search" id="fbSearch" placeholder="Search notes…">
     <span class="fb-count" id="fbCount"></span>
     <button class="fb-clear" id="fbClear" style="display:none">Clear</button>
+    <div class="cur-note" id="curNote" style="display:none"></div>
   </div>
 
   <!-- KPI tiles -->
@@ -579,7 +610,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 4
     <form id="entryForm" autocomplete="off">
       <div class="form-grid">
         <div class="field">
-          <label for="fAmount">Amount</label>
+          <label for="fAmount" id="fAmountLbl">Amount</label>
           <input type="number" id="fAmount" inputmode="decimal" min="0.01" step="0.01" placeholder="0.00" required>
         </div>
         <div class="field">
@@ -623,15 +654,16 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 4
       <div class="sub">Where the money went</div>
       <div class="chart-box"><canvas id="catChart"></canvas><div class="chart-empty" id="catEmpty" style="display:none">No entries this month yet</div></div>
     </div>
-    <div class="chart-card">
-      <h2 class="serif">Payment modes</h2>
-      <div class="sub">Cash · Card · UPI split</div>
-      <div class="chart-box"><canvas id="modeChart"></canvas><div class="chart-empty" id="modeEmpty" style="display:none">No entries this month yet</div></div>
-    </div>
+    <!-- The trend line takes the wide column; payment modes shrink to the narrow one. -->
     <div class="chart-card">
       <h2 class="serif">Monthly trend</h2>
       <div class="sub" id="trendSub">Last 12 months</div>
       <div class="chart-box"><canvas id="trendChart"></canvas><div class="chart-empty" id="trendEmpty" style="display:none">Nothing recorded yet</div></div>
+    </div>
+    <div class="chart-card">
+      <h2 class="serif">Payment modes</h2>
+      <div class="sub">Cash · Card · UPI split</div>
+      <div class="chart-box"><canvas id="modeChart"></canvas><div class="chart-empty" id="modeEmpty" style="display:none">No entries this month yet</div></div>
     </div>
   </div>
 
@@ -700,6 +732,7 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 4
           <option value="JPY">¥ JPY — Japanese Yen</option>
         </select>
       </div>
+      <p class="muted-note">Switching currency only affects <b>new</b> entries. Everything already recorded keeps the currency it was entered in — nothing is converted or rewritten. Totals and charts show one currency at a time; once you hold more than one, a Currency selector appears in the filter bar.</p>
     </div>
 
     <div class="set-section">
@@ -735,9 +768,21 @@ footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 4
 
     <div class="set-section">
       <h3>Danger zone</h3>
-      <button class="btn btn-danger" id="wipeBtn">Erase all entries</button>
-      <p class="muted-note">This clears every entry and budget — and because your ledger syncs, it erases them on your other devices too. Export a backup first if you might want the data back.</p>
+      <button class="btn btn-danger" id="wipeBtn">Erase all entries…</button>
+      <p class="muted-note">Clears every entry and budget on all your devices. Guarded by four steps — a warning, a summary of what is lost, typing <b>ERASE</b>, and finally your passcode.</p>
     </div>
+  </div>
+</div>
+
+<!-- Erase confirmation — four deliberate steps, the last one cryptographic -->
+<div class="modal-overlay" id="eraseModal">
+  <div class="modal small">
+    <div class="modal-head">
+      <h2 class="serif" id="eraseTitle">Erase everything</h2>
+      <button class="close" data-close="eraseModal">✕</button>
+    </div>
+    <div class="steps" id="eraseSteps"></div>
+    <div id="eraseBody"></div>
   </div>
 </div>
 
@@ -925,8 +970,52 @@ function monthLabelOf(mk) {
 function uid() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now()+"-"+Math.random().toString(36).slice(2)); }
 function esc(s) { return String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
-function fmtMoney(n, opts={}) {
+/* ---------------------------------------------------------------------
+   Multi-currency. Every entry (and budget) remembers the currency it was
+   recorded in, so switching the currency in Settings only affects what is
+   recorded from then on. Records made before this existed carry no `cur`;
+   they are treated as the current currency until the first switch, when
+   stampLegacyCurrency() freezes them in the currency they were entered in.
+--------------------------------------------------------------------- */
+let viewCur = "INR";                   // currency the dashboard is currently showing
+function entryCur(e) { return (e && e.cur) || state.settings.currency || "INR"; }
+function budgetCur(b) { return (b && b.cur) || state.settings.currency || "INR"; }
+function stampLegacyCurrency() {
   const cur = state.settings.currency || "INR";
+  /* +1 (not now()) so a stamped record beats its unstamped twin on other
+     devices during merge, without disturbing same-day ordering. */
+  Object.values(state.entries).forEach(e => {
+    if (!e.deleted && !e.cur) { e.cur = cur; e.updatedAt = (e.updatedAt || 0) + 1; }
+  });
+  Object.keys(state.budgets).forEach(k => {
+    const b = state.budgets[k];
+    if (b && b.amount > 0 && !b.cur) { b.cur = cur; b.updatedAt = (b.updatedAt || 0) + 1; }
+  });
+}
+function currenciesInData() {
+  const out = {};
+  Object.values(state.entries).forEach(e => { if (!e.deleted) { const c = entryCur(e); out[c] = (out[c]||0) + 1; } });
+  return out;
+}
+/* Sums in different currencies are meaningless, so the dashboard shows one
+   currency at a time. Auto = the currency chosen in Settings, unless nothing
+   has been recorded in it yet (so right after a switch you still see your
+   history rather than an empty screen). */
+function resolveViewCur() {
+  const present = currenciesInData();
+  const keys = Object.keys(present);
+  if (flt.cur && present[flt.cur]) return flt.cur;
+  const cur = state.settings.currency || "INR";
+  if (present[cur] || !keys.length) return cur;
+  let latest = null;
+  activeEntries().forEach(e => {
+    if (!latest || e.date > latest.date || (e.date === latest.date && (e.updatedAt||0) > (latest.updatedAt||0))) latest = e;
+  });
+  return entryCur(latest);
+}
+
+function fmtMoney(n, opts={}) {
+  const cur = opts.cur || viewCur || state.settings.currency || "INR";
   const locale = cur === "INR" ? "en-IN" : undefined;
   try {
     return new Intl.NumberFormat(locale, {
@@ -1124,7 +1213,7 @@ const RANGE_PRESETS = [
   { id:"all",    label:"All time" },
   { id:"custom", label:"Custom" }
 ];
-let flt = { range:"month", from:"", to:"", cats:[], modes:[], min:null, max:null, q:"" };
+let flt = { range:"month", from:"", to:"", cats:[], modes:[], min:null, max:null, q:"", cur:null };
 
 function pad2(n) { return String(n).padStart(2,"0"); }
 function monthStart(mk) { return mk + "-01"; }
@@ -1155,7 +1244,7 @@ function rawBounds() {
 function dataBounds() {
   const [f,t] = rawBounds();
   if (f !== "0000-01-01" && t !== "9999-12-31") return [f,t];
-  const ds = activeEntries().map(e => e.date).sort();
+  const ds = activeEntries().filter(e => entryCur(e) === viewCur).map(e => e.date).sort();
   const today = todayStr();
   const lo = ds.length ? ds[0] : today;
   const hi = ds.length ? ds[ds.length-1] : today;
@@ -1163,6 +1252,7 @@ function dataBounds() {
 }
 function passesDate(e) { const [f,t] = rawBounds(); return e.date >= f && e.date <= t; }
 function passesRest(e) {
+  if (entryCur(e) !== viewCur) return false;          // never mix currencies in one total
   if (flt.cats.length && !flt.cats.includes(e.cat)) return false;
   if (flt.modes.length && !flt.modes.includes(e.mode)) return false;
   if (flt.min != null && e.amount < flt.min) return false;
@@ -1177,7 +1267,7 @@ function passes(e) { return passesDate(e) && passesRest(e); }
 function narrowsSpend() {
   return flt.cats.length > 0 || flt.modes.length > 0 || flt.min != null || flt.max != null || !!flt.q;
 }
-function anyFilterActive() { return narrowsSpend() || flt.range !== "month"; }
+function anyFilterActive() { return narrowsSpend() || flt.range !== "month" || flt.cur != null; }
 
 /* Whole calendar months the range covers, or null when it cuts months short.
    Budgets are monthly, so they only make sense over whole months. */
@@ -1195,6 +1285,7 @@ function wholeMonths() {
 function isSingleMonth() { const wm = wholeMonths(); return wm && wm.length === 1 ? wm[0] : null; }
 
 function computeView() {
+  viewCur = resolveViewCur();                    // must be set before any predicate runs
   const list = activeEntries().filter(passes);
   const total = list.reduce((s,e)=>s+e.amount, 0);
   const [bf,bt] = dataBounds();
@@ -1230,7 +1321,8 @@ function computeView() {
     if (wm) {
       const sum = wm.reduce((s,mk) => {
         const b = state.budgets[mk];
-        return s + (b && b.amount > 0 ? b.amount : 0);
+        /* a budget only counts against spend in the same currency */
+        return s + (b && b.amount > 0 && budgetCur(b) === viewCur ? b.amount : 0);
       }, 0);
       if (sum > 0) { budget = sum; budgetMonths = wm; }
     }
@@ -1298,7 +1390,14 @@ function renderAll() {
   renderList(V);
   renderCatSelects();
   renderCatManager();
+  updateAmountLabel();
   $("setCurrency").value = state.settings.currency || "INR";
+}
+/* The entry form records in the Settings currency — or, when editing, the
+   currency the entry was originally recorded in. */
+function updateAmountLabel() {
+  const e = editingId ? state.entries[editingId] : null;
+  $("fAmountLbl").textContent = "Amount · " + (e ? entryCur(e) : (state.settings.currency || "INR"));
 }
 
 function renderRangeBar(V) {
@@ -1311,7 +1410,7 @@ function renderRangeBar(V) {
   if (single) {
     pill.style.display = "";
     const b = state.budgets[single];
-    if (b && b.amount > 0) pill.innerHTML = `Budget <b>${fmtMoney(b.amount)}</b> <span class="set">✎</span>`;
+    if (b && b.amount > 0) pill.innerHTML = `Budget <b>${fmtMoney(b.amount, {cur: budgetCur(b)})}</b> <span class="set">✎</span>`;
     else pill.innerHTML = `<span class="set">＋ Set budget for ${esc(monthLabelOf(single).split(" ")[0])}</span>`;
   } else {
     pill.style.display = "none";
@@ -1327,7 +1426,8 @@ function renderKPIs(V) {
     const cls = pct <= 0 ? "delta-down" : "delta-up";
     deltaHtml = `<span class="${cls}">${pct <= 0 ? "▼" : "▲"} ${Math.abs(pct).toFixed(0)}%</span> ${prev.label}`;
   }
-  tiles.push(`<div class="kpi"><div class="lbl">Total spent</div><div class="val">${fmtMoney(V.total)}</div>
+  const multiCur = Object.keys(currenciesInData()).length > 1;
+  tiles.push(`<div class="kpi"><div class="lbl">Total spent${multiCur ? " · " + esc(viewCur) : ""}</div><div class="val">${fmtMoney(V.total)}</div>
       <div class="sub">${deltaHtml}</div></div>`);
 
   if (V.budget) {
@@ -1405,13 +1505,28 @@ function renderCharts(V) {
   $("dailySub").textContent = rangeLabel() + (V.byMonth ? " · month by month" : " · day by day");
 
   /* Spend over time — single series, adaptive buckets */
+  /* Thin vertical guide under the pointer, so a tooltip reads against its day/month. */
+  const crosshair = { id:"crosshair", afterDatasetsDraw(chart) {
+    const act = chart.tooltip && chart.tooltip.getActiveElements ? chart.tooltip.getActiveElements() : [];
+    if (!act.length) return;
+    const x = act[0].element.x, a = chart.chartArea, ctx = chart.ctx;
+    ctx.save(); ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom);
+    ctx.lineWidth = 1; ctx.strokeStyle = c.base; ctx.stroke(); ctx.restore();
+  } };
   if (has) {
+    const dense = V.keys.length > 31;               // a marker on every point turns to beads past a month
     charts.daily = new Chart($("dailyChart"), {
-      type: "bar",
+      type: "line",
+      plugins: [crosshair],
       data: { labels: V.keys.map(k => bucketLabel(k, V.byMonth, V.span)),
-        datasets: [{ data: V.values, backgroundColor: cssVar("--s1"),
-          borderRadius: 4, borderSkipped: "bottom", maxBarThickness: 24, categoryPercentage: .78, barPercentage: .92 }] },
+        datasets: [{ data: V.values,
+          borderColor: cssVar("--s1"), borderWidth: 2,
+          backgroundColor: cssVar("--s1") + "1A", fill: true,
+          cubicInterpolationMode: "monotone", borderCapStyle: "round", borderJoinStyle: "round",
+          pointRadius: dense ? 0 : 4, pointHoverRadius: 6, pointBorderWidth: 2,
+          pointBorderColor: c.surface, pointBackgroundColor: cssVar("--s1") }] },
       options: { responsive:true, maintainAspectRatio:false,
+        interaction: { mode:"index", intersect:false },
         plugins: { legend:{display:false},
           tooltip: { ...tooltipStyle(c), displayColors:false,
             callbacks: {
@@ -1519,17 +1634,20 @@ function renderCharts(V) {
   $("trendSub").textContent = narrowsSpend() ? "Filters applied · ignores the date range"
                                              : "Last 12 months · ignores the date range";
   if (anyTrend) {
+    const hot = months.map(mk => inRange.size ? inRange.has(mk) : (monthStart(mk) <= rt && monthEnd(mk) >= rf));
     charts.trend = new Chart($("trendChart"), {
-      type: "bar",
+      type: "line",
+      plugins: [crosshair],
       data: { labels: months.map(mk => { const [y,m]=mk.split("-").map(Number);
-                return new Date(y,m-1,1).toLocaleDateString("en-GB",{month:"short"}); }),
+                return new Date(y,m-1,1).toLocaleDateString("en-GB",{month:"short", year:"2-digit"}); }),
         datasets: [{ data: totals,
-          backgroundColor: months.map(mk => {
-            const hot = inRange.size ? inRange.has(mk) : (monthStart(mk) <= rt && monthEnd(mk) >= rf);
-            return hot ? cssVar("--s1") : cssVar("--s1") + "66";
-          }),
-          borderRadius: 4, borderSkipped: "bottom", maxBarThickness: 24, categoryPercentage: .7 }] },
+          borderColor: cssVar("--s1"), borderWidth: 2,
+          backgroundColor: cssVar("--s1") + "1A", fill: true,         // ~10% wash under the line
+          cubicInterpolationMode: "monotone", borderCapStyle: "round", borderJoinStyle: "round",
+          pointRadius: 5, pointHoverRadius: 7, pointBorderWidth: 2, pointBorderColor: c.surface,
+          pointBackgroundColor: hot.map(h => h ? cssVar("--s1") : cssVar("--s1") + "66") }] },
       options: { responsive:true, maintainAspectRatio:false,
+        interaction: { mode:"index", intersect:false },
         onClick: (ev, els) => { if (els.length) jumpToMonth(months[els[0].index]); },
         onHover: (ev, els) => { ev.native.target.style.cursor = els.length ? "pointer" : "default"; },
         plugins: { legend:{display:false},
@@ -1597,6 +1715,7 @@ function chipTotals() {
   const t = {};
   activeEntries().forEach(e => {
     if (!passesDate(e)) return;
+    if (entryCur(e) !== viewCur) return;
     if (flt.modes.length && !flt.modes.includes(e.mode)) return;
     if (flt.min != null && e.amount < flt.min) return;
     if (flt.max != null && e.amount > flt.max) return;
@@ -1610,7 +1729,7 @@ function chipTotals() {
 }
 
 let openDD = null;                                  // id of the open dropdown, kept across re-renders
-const DD_IDS = ["ddPeriod","ddCat","ddAmt","ddMode"];
+const DD_IDS = ["ddPeriod","ddCat","ddAmt","ddMode","ddCur"];
 const numOrNull = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
 let fbDebounce = null;
 function fbChanged() { clearTimeout(fbDebounce); fbDebounce = setTimeout(renderAll, 220); }
@@ -1639,6 +1758,34 @@ function renderFilterBar(V) {
   $("ddCat").classList.toggle("on", flt.cats.length > 0);
   $("ddAmt").classList.toggle("on", flt.min != null || flt.max != null);
   $("ddMode").classList.toggle("on", flt.modes.length > 0);
+
+  /* --- Currency: only appears once more than one currency has been recorded --- */
+  const present = currenciesInData();
+  const curKeys = Object.keys(present).sort();
+  $("ddCur").style.display = curKeys.length > 1 ? "" : "none";
+  $("vCur").textContent = viewCur;
+  $("ddCur").classList.toggle("on", flt.cur != null);
+  const perCur = {};                                   // what each currency holds in the chosen period
+  activeEntries().forEach(e => { if (passesDate(e)) { const c = entryCur(e); perCur[c] = (perCur[c]||0) + e.amount; } });
+  if (curKeys.length > 1 && setPanel("panelCur",
+    `<div class="dd-head"><span>Currency</span>${flt.cur?`<button data-curclear>Auto</button>`:""}</div>
+     <div class="dd-list">${curKeys.map(c =>
+       `<button class="dd-opt${viewCur===c?" sel":""}" data-cur="${esc(c)}">
+          <span class="tick">${viewCur===c?"✓":""}</span><span class="nm">${esc(c)}</span>
+          <span class="amt">${perCur[c] ? fmtMoney(perCur[c], {cur:c, compact:true}) : "—"}</span></button>`).join("")}
+     </div>
+     <div class="dd-note">Totals never mix currencies — pick which one to view.</div>`)) {
+    $("panelCur").querySelectorAll("[data-cur]").forEach(b => b.onclick = () => { flt.cur = b.dataset.cur; renderAll(); });
+    const cu = $("panelCur").querySelector("[data-curclear]");
+    if (cu) cu.onclick = () => { flt.cur = null; renderAll(); };
+  }
+  /* a nudge when the period also holds money in another currency */
+  const others = Object.keys(perCur).filter(c => c !== viewCur);
+  $("curNote").style.display = others.length ? "" : "none";
+  $("curNote").innerHTML = others.length
+    ? `Also in this period: ${others.map(c => `<a data-jump="${esc(c)}">${fmtMoney(perCur[c], {cur:c})} · ${esc(c)}</a>`).join(" · ")}`
+    : "";
+  $("curNote").querySelectorAll("[data-jump]").forEach(a => a.onclick = () => { flt.cur = a.dataset.jump; renderAll(); });
 
   /* --- Period panel --- */
   if (setPanel("panelPeriod",
@@ -1768,7 +1915,7 @@ function toggleMode(m) {
   renderAll();
 }
 function clearFilters() {
-  flt = { range:"month", from:"", to:"", cats:[], modes:[], min:null, max:null, q:"" };
+  flt = { range:"month", from:"", to:"", cats:[], modes:[], min:null, max:null, q:"", cur:null };
   renderAll();
   toast("Filters cleared");
 }
@@ -1822,9 +1969,13 @@ $("entryForm").addEventListener("submit", ev => {
   if (!(amount > 0)) { toast("Enter an amount above zero"); return; }
   const date = $("fDate").value;
   if (!date) { toast("Pick a date"); return; }
+  /* New entries take the Settings currency; edits keep the currency the entry
+     was originally recorded in, so editing never silently reprices history. */
+  const cur = editingId && state.entries[editingId] ? entryCur(state.entries[editingId])
+                                                     : (state.settings.currency || "INR");
   const entry = {
     id: editingId || uid(),
-    date, amount: Math.round(amount*100)/100,
+    date, amount: Math.round(amount*100)/100, cur,
     cat: $("fCat").value, mode: $("fMode").value,
     note: $("fNote").value.trim(), updatedAt: now()
   };
@@ -1833,7 +1984,7 @@ $("entryForm").addEventListener("submit", ev => {
   stopEdit();
   viewMonth = date.slice(0,7);
   commit();
-  toast(wasEdit ? "Entry updated" : fmtMoney(entry.amount) + " recorded");
+  toast(wasEdit ? "Entry updated" : fmtMoney(entry.amount, {cur}) + " recorded");
 });
 window.startEdit = function(id) {
   const e = state.entries[id];
@@ -1851,6 +2002,7 @@ window.startEdit = function(id) {
   $("formTitle").textContent = "Edit expense";
   $("saveBtn").textContent = "Save changes";
   $("cancelEdit").style.display = "";
+  updateAmountLabel();
   $("entryForm").scrollIntoView({ behavior:"smooth", block:"center" });
   $("fAmount").focus();
 };
@@ -1861,12 +2013,13 @@ function stopEdit() {
   $("formTitle").textContent = "Record an expense";
   $("saveBtn").textContent = "Add expense";
   $("cancelEdit").style.display = "none";
+  updateAmountLabel();
 }
 $("cancelEdit").onclick = stopEdit;
 window.deleteEntry = function(id) {
   const e = state.entries[id];
   if (!e) return;
-  if (!confirm(`Delete ${fmtMoney(e.amount)} — ${e.cat}?`)) return;
+  if (!confirm(`Delete ${fmtMoney(e.amount, {cur: entryCur(e)})} — ${e.cat}?`)) return;
   state.entries[id] = { id, deleted: true, updatedAt: now() };
   if (editingId === id) stopEdit();
   commit();
@@ -1892,8 +2045,9 @@ function budgetMonth() { return isSingleMonth() || viewMonth; }
 window.openBudget = function() {
   const mk = budgetMonth();
   $("budgetModalTitle").textContent = "Budget · " + monthLabelOf(mk);
+  document.querySelector('label[for="budgetInput"]').textContent = "Monthly budget amount · " + viewCur;
   const b = state.budgets[mk];
-  $("budgetInput").value = b && b.amount > 0 ? b.amount : "";
+  $("budgetInput").value = b && b.amount > 0 && budgetCur(b) === viewCur ? b.amount : "";
   openModal("budgetModal");
   setTimeout(()=>$("budgetInput").focus(), 60);
 };
@@ -1902,7 +2056,10 @@ $("budgetSave").onclick = () => {
   const v = parseFloat($("budgetInput").value);
   if (!(v > 0)) { toast("Enter a budget above zero"); return; }
   const mk = budgetMonth();
-  state.budgets[mk] = { amount: Math.round(v), updatedAt: now() };
+  const old = state.budgets[mk];
+  if (old && old.amount > 0 && budgetCur(old) !== viewCur &&
+      !confirm(`${monthLabelOf(mk)} already has a budget in ${budgetCur(old)}. Replace it with a ${viewCur} budget?`)) return;
+  state.budgets[mk] = { amount: Math.round(v), cur: viewCur, updatedAt: now() };
   closeModal("budgetModal");
   commit();
   toast("Budget set for " + monthLabelOf(mk));
@@ -1932,10 +2089,14 @@ $("setTheme").onchange = e => applyTheme(e.target.value);
 
 /* currency */
 $("setCurrency").onchange = e => {
-  state.settings.currency = e.target.value;
+  const next = e.target.value;
+  if (next === (state.settings.currency || "INR")) return;
+  stampLegacyCurrency();               // freeze everything so far in the currency it was entered in
+  state.settings.currency = next;
   state.meta.settings = now();
+  flt.cur = null;                      // back to auto-select
   commit();
-  toast("Currency set to " + e.target.value);
+  toast(`New entries will be recorded in ${next} — existing entries keep their currency`);
 };
 
 /* filter inputs — the amount and date fields live inside dropdown panels and are
@@ -1944,8 +2105,9 @@ $("fbSearch").addEventListener("input", e => { flt.q = e.target.value.trim(); fb
 $("fbClear").onclick = clearFilters;
 
 /* backup */
-$("exportBtn").onclick = () => {
-  const blob = new Blob([JSON.stringify({ app:"aurum-ledger", version:1, exportedAt:new Date().toISOString(), state }, null, 2)],
+function doExport() {
+  const blob = new Blob([JSON.stringify(
+    { app:"aurum-ledger", version:1, exportedAt:new Date().toISOString(), state: payloadOf(state) }, null, 2)],
     { type:"application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -1953,7 +2115,8 @@ $("exportBtn").onclick = () => {
   a.click();
   URL.revokeObjectURL(a.href);
   toast("Backup exported");
-};
+}
+$("exportBtn").onclick = doExport;
 $("importBtn").onclick = () => $("importFile").click();
 $("importFile").onchange = ev => {
   const f = ev.target.files[0];
@@ -1972,9 +2135,133 @@ $("importFile").onchange = ev => {
   };
   r.readAsText(f);
 };
-$("wipeBtn").onclick = () => {
-  if (!confirm("Erase ALL entries and budgets from Aurum Ledger?")) return;
-  if (!confirm("This syncs to your other devices and cannot be undone. Really erase everything?")) return;
+/* =====================================================================
+   ERASE — four deliberate steps, the last verified against the passcode
+===================================================================== */
+let eraseStep = 1;
+let eraseTries = 0;
+
+/* One total per currency, never a blended sum. */
+function totalsLabel() {
+  const t = {};
+  activeEntries().forEach(e => { const c = entryCur(e); t[c] = (t[c]||0) + e.amount; });
+  const parts = Object.keys(t).sort().map(c => fmtMoney(t[c], {cur:c}));
+  return parts.length ? parts.join(" + ") : "—";
+}
+function openErase() {
+  eraseStep = 1; eraseTries = 0;
+  openModal("eraseModal");
+  renderErase();
+}
+$("wipeBtn").onclick = openErase;
+
+function renderErase() {
+  $("eraseSteps").innerHTML = [1,2,3,4]
+    .map(n => `<i class="${n <= eraseStep ? "done" : ""}"></i>`).join("");
+  const body = $("eraseBody");
+  const entryCount = activeEntries().length;
+  const budgetCount = Object.values(state.budgets).filter(b => b && b.amount > 0).length;
+
+  if (eraseStep === 1) {
+    $("eraseTitle").textContent = "Erase everything";
+    body.innerHTML = `
+      <p class="erase-warn">This removes <b>every entry and every budget</b> from your ledger.
+      Because your ledger syncs, they disappear from your phone and any other device too.</p>
+      <p class="erase-warn">There is no undo, and no copy left behind for us to restore.</p>
+      <div class="btnrow">
+        <button class="btn btn-ghost" id="eraseBackup">Export a backup first</button>
+      </div>
+      <div class="btnrow" style="margin-top:14px">
+        <button class="btn btn-danger" id="eraseNext">Continue</button>
+        <button class="btn btn-ghost" data-close="eraseModal">Cancel</button>
+      </div>`;
+    $("eraseBackup").onclick = doExport;
+    $("eraseNext").onclick = () => { eraseStep = 2; renderErase(); };
+  }
+
+  else if (eraseStep === 2) {
+    $("eraseTitle").textContent = "Confirm what is lost";
+    body.innerHTML = `
+      <p class="erase-warn">You are about to permanently erase:</p>
+      <div class="erase-count">
+        <div><span>Entries</span><b>${entryCount}</b></div>
+        <div><span>Months with a budget</span><b>${budgetCount}</b></div>
+        <div><span>Total recorded</span><b>${totalsLabel()}</b></div>
+      </div>
+      <label class="reccheck"><input type="checkbox" id="eraseAck">
+        I understand this cannot be undone and syncs to all my devices</label>
+      <div class="btnrow" style="margin-top:14px">
+        <button class="btn btn-danger" id="eraseNext" disabled>Continue</button>
+        <button class="btn btn-ghost" data-close="eraseModal">Cancel</button>
+      </div>`;
+    $("eraseAck").onchange = e => { $("eraseNext").disabled = !e.target.checked; };
+    $("eraseNext").onclick = () => { eraseStep = 3; renderErase(); };
+  }
+
+  else if (eraseStep === 3) {
+    $("eraseTitle").textContent = "Type to confirm";
+    body.innerHTML = `
+      <p class="erase-warn">Type <b>ERASE</b> below to confirm you meant to do this.</p>
+      <input type="text" class="erase-field" id="eraseWord" placeholder="ERASE"
+             autocomplete="off" spellcheck="false">
+      <div class="err-text" id="eraseErr"></div>
+      <div class="btnrow">
+        <button class="btn btn-danger" id="eraseNext" disabled>Continue</button>
+        <button class="btn btn-ghost" data-close="eraseModal">Cancel</button>
+      </div>`;
+    const f = $("eraseWord");
+    f.oninput = () => { $("eraseNext").disabled = f.value.trim().toUpperCase() !== "ERASE"; };
+    f.onkeydown = e => { if (e.key === "Enter" && !$("eraseNext").disabled) $("eraseNext").click(); };
+    $("eraseNext").onclick = () => { eraseStep = 4; renderErase(); };
+    setTimeout(() => f.focus(), 60);
+  }
+
+  else {
+    $("eraseTitle").textContent = "Enter your passcode";
+    body.innerHTML = `
+      <p class="erase-warn">Final step — enter your <b>6-digit passcode</b> to authorise the erase.</p>
+      <input type="password" class="erase-field" id="erasePin" inputmode="numeric"
+             pattern="[0-9]*" maxlength="6" placeholder="••••••" autocomplete="off">
+      <div class="err-text" id="eraseErr"></div>
+      <div class="btnrow">
+        <button class="btn btn-danger" id="eraseGo" disabled>Erase everything</button>
+        <button class="btn btn-ghost" data-close="eraseModal">Cancel</button>
+      </div>
+      <p class="erase-step-note">The passcode is checked by decryption, so a wrong code
+      cannot authorise this.</p>`;
+    const p = $("erasePin");
+    p.oninput = () => {
+      p.value = p.value.replace(/\D/g, "").slice(0,6);
+      $("eraseGo").disabled = p.value.length !== 6;
+      $("eraseErr").textContent = "";
+    };
+    p.onkeydown = e => { if (e.key === "Enter" && !$("eraseGo").disabled) $("eraseGo").click(); };
+    $("eraseGo").onclick = () => confirmErase(p.value);
+    setTimeout(() => p.focus(), 60);
+  }
+  /* the freshly-built Cancel buttons need their close handler bound */
+  $("eraseBody").querySelectorAll("[data-close]").forEach(b => b.onclick = () => closeModal(b.dataset.close));
+}
+
+async function confirmErase(pin) {
+  const btn = $("eraseGo");
+  btn.disabled = true;
+  $("eraseErr").textContent = "";
+  try {
+    /* Verify by actually unwrapping the master key — not by comparing a hash. */
+    await unwrapMK(pin, envelope.wrapPin);
+  } catch (e) {
+    eraseTries++;
+    if (eraseTries >= 3) {
+      closeModal("eraseModal");
+      toast("Erase cancelled — too many incorrect passcodes");
+      return;
+    }
+    $("eraseErr").textContent = `Incorrect passcode — ${3 - eraseTries} attempt${3-eraseTries===1?"":"s"} left.`;
+    $("erasePin").value = "";
+    $("erasePin").focus();
+    return;
+  }
   /* Tombstone rather than drop: a merge keeps any entry the other side still has,
      so a wipe only propagates if each id is explicitly marked deleted. */
   const t = now();
@@ -1982,10 +2269,12 @@ $("wipeBtn").onclick = () => {
   Object.keys(state.entries).forEach(id => { cleared[id] = { id, deleted: true, updatedAt: t }; });
   state.entries = cleared;
   Object.keys(state.budgets).forEach(mk => { state.budgets[mk] = { amount: null, updatedAt: t }; });
+  clearFilters();
   stopEdit();
+  closeModal("eraseModal");
   commit();
-  toast("All entries erased");
-};
+  toast("Everything erased");
+}
 
 /* =====================================================================
    PASSCODE LOCK
